@@ -54,8 +54,12 @@ line, and so a later version can restrict which shafts carry a network.
 
 ### Primitive Grid / Primitive Crafting Grid (`p_grid`, `p_crafting_grid`)
 
-A mechanical crafter body: Refined Storage screen on the front, the sequenced gearshift's
-shaft face on the back, crafter sides elsewhere. Rotation enters along the facing axis
+A mechanical crafter body, rebuilt from Create's own element layout: two slabs with a gap
+at z 6-10 and four thin rims. That gap matters - `crafter_side` carries a 48-pixel
+transparent window at rows 6-9 which Create never samples, because its side UVs take rows
+0-6 and 10-16 only and the gap in the geometry is where the mechanism shows. Ours shows a
+cogwheel there. Refined Storage screen on the front, the sequenced gearshift's shaft face
+on the back. Rotation enters along the facing axis
 through that rear shaft, and the screen lights once the block is turning and the network
 is not overstressed - an overstressed network means the stress units are not actually
 being supplied, which is the unpowered case.

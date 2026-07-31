@@ -1,89 +1,22 @@
 {
+  "__comment": "Body rebuilt from Create's mechanical crafter element layout: two slabs with a gap at z 6-10 and four thin rims. crafter_side has a transparent window at rows 6-9 which Create never samples - its side uvs take rows 0-6 and 10-16 only, and the gap in the geometry is where the mechanism shows. Ours shows a cogwheel there. West faces are mirrored, as Create has them.",
   "parent": "block/block",
-  "__comment": "Mechanical crafter sides, Refined Storage screen on the front, the sequenced gearshift's shaft face on the back. Authored facing north; the blockstate rotates it. Unlit.",
   "render_type": "cutout",
   "textures": {
     "front": "primitive_refined:block/p_crafting_grid_front_off",
     "glow": "primitive_refined:block/p_crafting_grid_screen_glow",
     "back": "primitive_refined:block/p_grid_back",
     "side": "create:block/crafter_side",
+    "inner_front": "create:block/brass_block",
+    "inner_back": "create:block/smooth_dark_log_top",
+    "cog": "primitive_refined:block/obsidiansteel_cogwheel",
     "shaft": "primitive_refined:block/soulstained_axis",
     "shaft_end": "primitive_refined:block/soulstained_axis_top",
-    "particle": "create:block/crafter_side",
-    "core": "create:block/brass_gearbox"
+    "particle": "create:block/crafter_side"
   },
   "elements": [
     {
-      "name": "core",
-      "from": [
-        1,
-        1,
-        1
-      ],
-      "to": [
-        15,
-        15,
-        15
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#core"
-        },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#core"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#core"
-        },
-        "west": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#core"
-        },
-        "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#core"
-        },
-        "down": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#core"
-        }
-      }
-    },
-    {
-      "name": "body",
+      "name": "front_slab",
       "from": [
         0,
         0,
@@ -92,7 +25,7 @@
       "to": [
         16,
         16,
-        16
+        6
       ],
       "faces": {
         "north": {
@@ -112,25 +45,24 @@
             16,
             16
           ],
-          "texture": "#back",
-          "cullface": "south"
+          "texture": "#inner_front"
         },
         "east": {
           "uv": [
             0,
             0,
             16,
-            16
+            6
           ],
           "texture": "#side",
           "cullface": "east"
         },
         "west": {
           "uv": [
-            0,
-            0,
             16,
-            16
+            0,
+            0,
+            6
           ],
           "texture": "#side",
           "cullface": "west"
@@ -140,7 +72,7 @@
             0,
             0,
             16,
-            16
+            6
           ],
           "texture": "#side",
           "cullface": "up"
@@ -150,10 +82,289 @@
             0,
             0,
             16,
+            6
+          ],
+          "texture": "#side",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "back_slab",
+      "from": [
+        0,
+        0,
+        10
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#back",
+          "cullface": "south"
+        },
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#inner_back"
+        },
+        "east": {
+          "uv": [
+            0,
+            10,
+            16,
+            16
+          ],
+          "texture": "#side",
+          "cullface": "east"
+        },
+        "west": {
+          "uv": [
+            16,
+            10,
+            0,
+            16
+          ],
+          "texture": "#side",
+          "cullface": "west"
+        },
+        "up": {
+          "uv": [
+            0,
+            10,
+            16,
+            16
+          ],
+          "texture": "#side",
+          "cullface": "up"
+        },
+        "down": {
+          "uv": [
+            0,
+            10,
+            16,
             16
           ],
           "texture": "#side",
           "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "rim_top",
+      "from": [
+        0,
+        15.9,
+        6
+      ],
+      "to": [
+        16,
+        16,
+        10
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ],
+          "texture": "#side",
+          "cullface": "up"
+        },
+        "down": {
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "rim_bottom",
+      "from": [
+        0,
+        0,
+        6
+      ],
+      "to": [
+        16,
+        0.1,
+        10
+      ],
+      "faces": {
+        "up": {
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ],
+          "texture": "#side"
+        },
+        "down": {
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ],
+          "texture": "#side",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "rim_east",
+      "from": [
+        15.9,
+        0,
+        6
+      ],
+      "to": [
+        16,
+        16,
+        10
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ],
+          "texture": "#side",
+          "cullface": "east"
+        },
+        "west": {
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ],
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "name": "rim_west",
+      "from": [
+        0,
+        0,
+        6
+      ],
+      "to": [
+        0.1,
+        16,
+        10
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            0,
+            6,
+            16,
+            10
+          ],
+          "texture": "#side"
+        },
+        "west": {
+          "uv": [
+            16,
+            6,
+            0,
+            10
+          ],
+          "texture": "#side",
+          "cullface": "west"
+        }
+      }
+    },
+    {
+      "name": "cog",
+      "from": [
+        1,
+        1,
+        6.5
+      ],
+      "to": [
+        15,
+        15,
+        9.5
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            1,
+            1,
+            15,
+            15
+          ],
+          "texture": "#cog"
+        },
+        "west": {
+          "uv": [
+            1,
+            1,
+            15,
+            15
+          ],
+          "texture": "#cog"
+        },
+        "up": {
+          "uv": [
+            1,
+            1,
+            15,
+            15
+          ],
+          "texture": "#cog"
+        },
+        "down": {
+          "uv": [
+            1,
+            1,
+            15,
+            15
+          ],
+          "texture": "#cog"
+        },
+        "north": {
+          "uv": [
+            1,
+            1,
+            15,
+            15
+          ],
+          "texture": "#cog"
+        },
+        "south": {
+          "uv": [
+            1,
+            1,
+            15,
+            15
+          ],
+          "texture": "#cog"
         }
       }
     },
