@@ -7,8 +7,8 @@
     "ov_west_glow": "primitive_refined:block/p_controller_overlay_west_glow",
     "ov_east_base": "primitive_refined:block/p_controller_overlay_east_base",
     "ov_east_glow": "primitive_refined:block/p_controller_overlay_east_glow",
-    "axis": "create:block/axis",
-    "end": "create:block/axis_top",
+    "axis": "malum:block/storage_blocks/block_of_soul_stained_steel",
+    "end": "malum:block/storage_blocks/block_of_soul_stained_steel",
     "particle": "create:block/rotation_speed_controller"
   },
   "elements": [
@@ -192,8 +192,7 @@
             10,
             10
           ],
-          "texture": "#end",
-          "tintindex": 0
+          "texture": "#end"
         },
         "east": {
           "uv": [
@@ -202,8 +201,7 @@
             10,
             10
           ],
-          "texture": "#axis",
-          "tintindex": 0
+          "texture": "#axis"
         },
         "west": {
           "uv": [
@@ -212,8 +210,7 @@
             10,
             10
           ],
-          "texture": "#axis",
-          "tintindex": 0
+          "texture": "#axis"
         },
         "up": {
           "uv": [
@@ -222,8 +219,7 @@
             10,
             10
           ],
-          "texture": "#axis",
-          "tintindex": 0
+          "texture": "#axis"
         },
         "down": {
           "uv": [
@@ -232,8 +228,7 @@
             10,
             10
           ],
-          "texture": "#axis",
-          "tintindex": 0
+          "texture": "#axis"
         }
       }
     },
@@ -257,8 +252,7 @@
             10,
             10
           ],
-          "texture": "#end",
-          "tintindex": 0
+          "texture": "#end"
         },
         "east": {
           "uv": [
@@ -267,8 +261,7 @@
             10,
             10
           ],
-          "texture": "#axis",
-          "tintindex": 0
+          "texture": "#axis"
         },
         "west": {
           "uv": [
@@ -277,8 +270,7 @@
             10,
             10
           ],
-          "texture": "#axis",
-          "tintindex": 0
+          "texture": "#axis"
         },
         "up": {
           "uv": [
@@ -287,8 +279,7 @@
             10,
             10
           ],
-          "texture": "#axis",
-          "tintindex": 0
+          "texture": "#axis"
         },
         "down": {
           "uv": [
@@ -297,8 +288,7 @@
             10,
             10
           ],
-          "texture": "#axis",
-          "tintindex": 0
+          "texture": "#axis"
         }
       }
     }

@@ -72,6 +72,25 @@ So: a fresh instance built from any pack will not have this mod, and the hand-pl
 will be wiped by the next pack sync of that instance. Closing the gap means creating the
 `bertie-mc` repo, tagging `v0.1.0`, and adding it to the pack from the release.
 
+## Temporary: the shaft borrows a Malum texture
+
+The Soulstained Shaft and the controller's shaft stubs currently reference
+
+    malum:block/storage_blocks/block_of_soul_stained_steel
+
+as a placeholder until proper art exists. Malum is **All Rights Reserved**, so it is
+referenced by path and resolved at runtime like Create's - no Malum pixel is in this jar.
+
+Two consequences worth knowing:
+
+- **Malum must be installed** or the shaft renders as a missing texture. It is not
+  declared as a hard dependency, because this is placeholder art and the mod does not
+  otherwise touch Malum. The s1 pack ships Malum, so this holds there.
+- The shaft deliberately carries **no `tintindex`**. It cannot: Create's
+  `KineticBlockEntityRenderer` bakes models into a `SuperByteBuffer` and applies no colour
+  at all, so a tinted shaft is drawn grey the moment it starts spinning. The colour has to
+  live in the texture. Whatever replaces this placeholder must be a real texture too.
+
 ## Known gaps
 
 - **The controller can drive the cogwheel above it, but not be driven by it.** Create's

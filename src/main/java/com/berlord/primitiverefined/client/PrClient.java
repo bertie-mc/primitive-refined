@@ -2,11 +2,12 @@ package com.berlord.primitiverefined.client;
 
 import com.berlord.primitiverefined.PrRegistry;
 import com.berlord.primitiverefined.PrimitiveRefined;
+import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
 @EventBusSubscriber(modid = PrimitiveRefined.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class PrClient {
@@ -15,48 +16,26 @@ public final class PrClient {
     }
 
     /**
-     * Soulstained steel, as a multiply tint over Create's grey axis texture.
+     * Makes the soulstained shaft turn.
      *
-     * <p>Chosen rather than eyeballed. Create's axis greys run about 90-143 per channel;
-     * a multiply can only darken, so the tint is the soulstained hue normalised so its
-     * strongest channel is 255. That maps the brightest axis pixel onto Malum's dominant
-     * soul stained steel tone (#744b90) almost exactly, and drops the rest of the texture
-     * into the darker end of the same palette - which is where a cast metal shaft belongs
-     * anyway, the ingot being the brightest form of the material.
+     * <p>Plain {@code KineticBlockEntityRenderer}, deliberately, not Create's
+     * {@code ShaftRenderer}: the latter overrides {@code getRenderedBlockState()} to return
+     * Create's <em>own</em> shaft state, which is what previously drew a grey Create shaft
+     * on top of ours. The base class returns the block entity's own state, so it renders
+     * our model.
+     *
+     * <p>This only produces the right colour because the shaft now carries a real
+     * soulstained texture rather than a tint. {@code KineticBlockEntityRenderer} bakes the
+     * model into a {@code SuperByteBuffer} and applies no colour whatsoever, so a
+     * {@code tintindex} recolour is silently dropped and any spinning copy comes out grey -
+     * which is exactly what happened before.
+     *
+     * <p>No Flywheel visual is registered. Without one, Flywheel leaves the block entity
+     * renderer alone, so this path runs whichever backend is active.
      */
-    public static final int SOULSTAINED_TINT = 0xCD85FF;
-
     @SubscribeEvent
-    static void registerBlockColors(RegisterColorHandlersEvent.Block event) {
-        event.register((state, level, pos, tintIndex) -> SOULSTAINED_TINT,
-                PrRegistry.SOULSTAINED_SHAFT.get());
-        // The controller's own shaft stubs are tinted the same way. Only they carry a
-        // tintindex; the overlay quads have none, so they are unaffected.
-        event.register((state, level, pos, tintIndex) -> tintIndex == 0 ? SOULSTAINED_TINT : 0xFFFFFF,
-                PrRegistry.P_CONTROLLER.get());
+    static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(PrRegistry.SOULSTAINED_SHAFT_BE.get(),
+                KineticBlockEntityRenderer::new);
     }
-
-    @SubscribeEvent
-    static void registerItemColors(RegisterColorHandlersEvent.Item event) {
-        event.register((stack, tintIndex) -> SOULSTAINED_TINT,
-                PrRegistry.SOULSTAINED_SHAFT_ITEM.get());
-    }
-
-    // No block entity renderer and no Flywheel visual are registered for the shaft, and
-    // that is deliberate. Both of Create's ready-made options draw the wrong thing:
-    //
-    //   ShaftRenderer.getRenderedBlockState() returns Create's OWN shaft state, so it
-    //   drew a grey Create shaft on top of our purple one.
-    //
-    //   ShaftVisual likewise instances Create's shaft partial model.
-    //
-    // Nor does swapping in a renderer that draws our own state help on its own: nothing
-    // in the shaft chain overrides getRenderShape, so the static chunk model is never
-    // suppressed and you get two shafts; and KineticBlockEntityRenderer bakes the model
-    // into a SuperByteBuffer with no tint handling at all, so a tintindex recolour is
-    // dropped and the spinning copy comes out grey regardless.
-    //
-    // The shaft therefore renders from its static model only - right colour, no spin -
-    // until we decide between colouring a custom renderer via SuperByteBuffer.color()
-    // and giving the shaft a real texture instead of a tint.
 }
