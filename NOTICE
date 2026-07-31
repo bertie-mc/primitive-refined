@@ -11,7 +11,7 @@ THIRD-PARTY ARTWORK - USED WITH PERMISSION
 berlord states that permission has been obtained from the respective authors to
 ship the derived textures listed below. That permission, not any licence term,
 is what makes their inclusion here lawful - Create's assets, Malum, Forbidden &
-Arcanus and Slag 'n Embers are each All Rights Reserved or equivalent, and none
+Arcanus are each All Rights Reserved or equivalent, and none
 of them grants this by default.
 
 Anyone forking or redistributing this repository does NOT inherit that
@@ -23,7 +23,14 @@ Derived from Create (The Create Team / Creators of Create):
   block/soulstained_axis_top.png          from create:block/axis_top
   block/soulstained_cogwheel_axis.png     from create:block/cogwheel_axis
   block/obsidiansteel_cogwheel.png        from create:block/cogwheel
-  block/rose_gold_cogwheel.png            from create:block/cogwheel
+  block/p_grid_back.png                   from create:block/brass_gearbox
+
+  The grid front faces below are flattened composites and contain Create pixels
+  too - create:block/railway_casing_side forms the brass frame and recess under
+  the Refined Storage screen:
+
+  block/p_grid_front.png                  block/p_grid_front_off.png
+  block/p_crafting_grid_front.png         block/p_crafting_grid_front_off.png
 
   Each is a luminance remap: Create's shading is preserved and only the palette
   is replaced. Models additionally reference Create's own models and textures by
@@ -34,17 +41,17 @@ Palettes taken from:
 
   Malum (soul stained steel)               - soulstained_*
   Forbidden & Arcanus (obsidiansteel)      - obsidiansteel_cogwheel
-  Slag 'n Embers (rose gold)               - rose_gold_cogwheel
 
 
 REFINED STORAGE - MIT
 
   block/p_controller_overlay_*.png
-  block/p_grid_front_*.png
-  block/p_crafting_grid_front_*.png
+  block/p_grid_front*.png                 block/p_grid_screen_glow.png
+  block/p_crafting_grid_front*.png        block/p_crafting_grid_screen_glow.png
 
-Derived from Refined Storage's purple controller and grid cutouts by Refined
-Mods, which is MIT licensed:
+Derived from Refined Storage's controller and grid cutouts by Refined Mods -
+the purple variants for the lit faces, "inactive" for the unlit ones - which is
+MIT licensed:
 
   The MIT License (MIT)
   Copyright (c) 2020 - 2025 Refined Mods
