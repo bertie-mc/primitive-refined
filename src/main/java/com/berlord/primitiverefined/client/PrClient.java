@@ -28,6 +28,10 @@ public final class PrClient {
     private static final PartialModel SOULSTAINED_SHAFT_MODEL =
             PartialModel.of(PrimitiveRefined.id("block/soulstained_shaft"));
 
+    /** The controller's two shaft stubs, split out of the body so they can spin on their own. */
+    private static final PartialModel CONTROLLER_SHAFT_STUBS =
+            PartialModel.of(PrimitiveRefined.id("block/p_controller_shaft_stubs"));
+
     /**
      * The Flywheel visual - the path that actually runs in normal play.
      *
@@ -42,10 +46,21 @@ public final class PrClient {
      */
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> SimpleBlockEntityVisualizer
-                .builder(PrRegistry.SOULSTAINED_SHAFT_BE.get())
-                .factory(SingleAxisRotatingVisual.of(SOULSTAINED_SHAFT_MODEL))
-                .apply());
+        event.enqueueWork(() -> {
+            SimpleBlockEntityVisualizer
+                    .builder(PrRegistry.SOULSTAINED_SHAFT_BE.get())
+                    .factory(SingleAxisRotatingVisual.of(SOULSTAINED_SHAFT_MODEL))
+                    .apply();
+
+            // The controller's stubs. Only the stubs are drawn here - the body keeps
+            // coming from the chunk mesh, which a visual does not suppress (that is why
+            // the shaft used to spin and stand still at once, and why the controller does
+            // not vanish now).
+            SimpleBlockEntityVisualizer
+                    .builder(PrRegistry.P_CONTROLLER_BE.get())
+                    .factory(SingleAxisRotatingVisual.of(CONTROLLER_SHAFT_STUBS))
+                    .apply();
+        });
     }
 
     /**

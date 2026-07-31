@@ -7,8 +7,6 @@
     "ov_west_glow": "primitive_refined:block/p_controller_overlay_west_glow",
     "ov_east_base": "primitive_refined:block/p_controller_overlay_east_base",
     "ov_east_glow": "primitive_refined:block/p_controller_overlay_east_glow",
-    "axis": "malum:block/storage_blocks/block_of_soul_stained_steel",
-    "end": "malum:block/storage_blocks/block_of_soul_stained_steel",
     "particle": "create:block/rotation_speed_controller"
   },
   "elements": [
@@ -169,126 +167,6 @@
             "block_light": 15,
             "sky_light": 15
           }
-        }
-      }
-    },
-    {
-      "name": "stub_north",
-      "from": [
-        6,
-        6,
-        0
-      ],
-      "to": [
-        10,
-        10,
-        1
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ],
-          "texture": "#end"
-        },
-        "east": {
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ],
-          "texture": "#axis"
-        },
-        "west": {
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ],
-          "texture": "#axis"
-        },
-        "up": {
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ],
-          "texture": "#axis"
-        },
-        "down": {
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ],
-          "texture": "#axis"
-        }
-      }
-    },
-    {
-      "name": "stub_south",
-      "from": [
-        6,
-        6,
-        15
-      ],
-      "to": [
-        10,
-        10,
-        16
-      ],
-      "faces": {
-        "south": {
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ],
-          "texture": "#end"
-        },
-        "east": {
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ],
-          "texture": "#axis"
-        },
-        "west": {
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ],
-          "texture": "#axis"
-        },
-        "up": {
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ],
-          "texture": "#axis"
-        },
-        "down": {
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ],
-          "texture": "#axis"
         }
       }
     }

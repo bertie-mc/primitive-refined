@@ -109,8 +109,10 @@ quietly losing the connection.
 
 ## Known gaps
 
-- **The controller's shaft stubs do not rotate.** They are static geometry in the overlay
-  model. Making them turn needs a `SpeedControllerRenderer`-style block entity renderer
-  with a registered `PartialModel`, which is not done yet.
+- **With Flywheel's backend off, the controller's shaft stubs do not render at all.** They
+  are drawn only by a Flywheel visual; unlike the shaft, no block entity renderer fallback
+  is registered for them, because a fallback would have to place and orient the stubs by
+  hand through `CachedBuffers.partial` and that path is untested. The body and everything
+  else is unaffected.
 - **No recipes.** Both blocks are creative-tab only so far.
 - Nothing here has been verified in a running client yet.
