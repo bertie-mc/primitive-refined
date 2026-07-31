@@ -26,6 +26,17 @@ Derived from Create (The Create Team / Creators of Create):
   block/p_grid_back.png                   from create:block/brass_gearbox
   block/p_controller_side.png             from create:block/rotation_speed_controller
   block/p_controller_side_off.png         from create:block/rotation_speed_controller
+  block/external_reader_front.png         from create:block/threshold_switch_front
+  block/external_reader_side.png          from create:block/threshold_switch/level_0
+  block/external_reader_side_glow_a.png   from create:block/threshold_switch/level_5
+  block/external_reader_side_glow_b.png   from create:block/threshold_switch/level_5
+  block/external_reader_side_glow_full.png  from create:block/threshold_switch/level_5
+
+  The External Reader's front moves Create's own pixels rather than repainting
+  them: the indicator square is hue-rotated red to purple with saturation and
+  value untouched, and the ring around it is scaled down in value alone. The
+  three side glow layers carry only the lit pixels of Create's level indicator,
+  hue-rotated onto this mod's two screen colours.
 
   The two controller side textures are Create's own with 50 pixels replaced by
   Refined Storage's (10 for the paired L's, 40 for the insert).
