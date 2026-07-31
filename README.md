@@ -109,23 +109,29 @@ Recolours are a luminance remap rather than a hue shift, so Create's shading sur
 only the palette changes. That matters mechanically as well as visually — the axis
 texture's lengthwise grooves are what make a spinning shaft read as spinning.
 
-## Deployment status — the packs do not have this mod
+## Deployment status
 
-`primitive_refined-0.1.0.jar` was copied by hand into the **s1 demo** Prism instance
-(`instances/s1 demo/.minecraft/mods/`) for testing. That is the only place it exists — and
-that copy is **stale**: it is the build with the old grid body, from before the rebuild
-described above. Nothing has been copied over it, deliberately.
+Released. [`bertie-mc/primitive-refined`](https://github.com/bertie-mc/primitive-refined),
+tag `v0.1.0`, jar attached to the GitHub Release by `release.yml`.
 
-**This repository also has no git remote.** Nothing here has ever been pushed anywhere.
+`packs/s1-pack` consumes it — `mods/primitive-refined.pw.toml`, added with
+`packwiz github add bertie-mc/primitive-refined`, pinned to `v0.1.0`. The **s1 demo**
+instance has been synced against that pack, which replaced the hand-copied jar that had
+been sitting there since before the grid rebuild. Nothing is hand-copied any more; a
+re-sync now brings the released build.
 
-It is **not** in `packs/s1-pack`, `packs/bertie-pack`, `packs/full-test-pack` or
-`packs/worldgen-pack`, and it cannot be until there is a GitHub Release to point
-`packwiz github add bertie-mc/primitive-refined` at. Loose jars must never go into
-`packs/*/mods/`.
+It is **not** in `packs/bertie-pack`, `packs/full-test-pack` or `packs/worldgen-pack`.
+Adding it is one `packwiz github add` in each, whenever those packs want it.
 
-So: a fresh instance built from any pack will not have this mod, and the hand-placed jar
-will be wiped by the next pack sync of that instance. Closing the gap means creating the
-`bertie-mc` repo, tagging `v0.1.0`, and adding it to the pack from the release.
+### CI
+
+`build.yml` and `release.yml`, both on `bertie-ci` v3.1.0, the same as every other bertie
+mod — **minus the client and server runtime jobs.** Those boot the jar in a real game, and
+Create is a required dependency here, so without Create present NeoForge stops at a
+missing-dependency screen and the job fails having tested nothing. `bertie-ci`'s fixture
+catalogue has no Create entry. Adding one there is the fix, and it belongs in that
+repository, not this one — until then this mod's CI proves that it *compiles* and nothing
+more.
 
 ## The one mixin
 
@@ -243,6 +249,6 @@ Not verified: the controller's shaft stubs spinning, the restored controller glo
 anything with Flywheel's backend switched off.
 
 **Nothing from the grid-body rebuild is in that list.** It all postdates the last session
-in the s1 demo instance, and the jar sitting in that instance is the build from before it.
-The whole of the grid section above is previewer work; see Known gaps for what to check
-first.
+in the s1 demo instance. The whole of the grid section above is previewer work; see Known
+gaps for what to check first. The instance now carries the `v0.1.0` release, so it is
+finally possible to look.
