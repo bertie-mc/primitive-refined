@@ -1,0 +1,18 @@
+{
+  "__comment": "Same axis mapping Create uses for its own cogwheel.",
+  "variants": {
+    "axis=x": {
+      "model": "primitive_refined:block/obsidiansteel_cogwheel_soulstained",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "primitive_refined:block/obsidiansteel_cogwheel_soulstained"
+    },
+    "axis=z": {
+      "model": "primitive_refined:block/obsidiansteel_cogwheel_soulstained",
+      "x": 90,
+      "y": 180
+    }
+  }
+}

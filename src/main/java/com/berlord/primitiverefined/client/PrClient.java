@@ -1,6 +1,10 @@
 package com.berlord.primitiverefined.client;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.berlord.primitiverefined.PrRegistry;
+import com.berlord.primitiverefined.content.cogwheel.PrCogwheels;
 import com.berlord.primitiverefined.PrimitiveRefined;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 import com.simibubi.create.content.kinetics.base.SingleAxisRotatingVisual;
@@ -27,6 +31,15 @@ public final class PrClient {
      */
     private static final PartialModel SOULSTAINED_SHAFT_MODEL =
             PartialModel.of(PrimitiveRefined.id("block/soulstained_shaft"));
+
+    /** One partial per cogwheel variant - Flywheel binds a visual per block entity type. */
+    private static final Map<String, PartialModel> COGWHEEL_MODELS = new HashMap<>();
+
+    static {
+        for (String name : PrCogwheels.NAMES) {
+            COGWHEEL_MODELS.put(name, PartialModel.of(PrimitiveRefined.id("block/" + name)));
+        }
+    }
 
     /** The controller's two shaft stubs, split out of the body so they can spin on their own. */
     private static final PartialModel CONTROLLER_SHAFT_STUBS =
@@ -60,6 +73,13 @@ public final class PrClient {
                     .builder(PrRegistry.P_CONTROLLER_BE.get())
                     .factory(SingleAxisRotatingVisual.of(CONTROLLER_SHAFT_STUBS))
                     .apply();
+
+            for (String name : PrCogwheels.NAMES) {
+                SimpleBlockEntityVisualizer
+                        .builder(PrCogwheels.BLOCK_ENTITIES.get(name).get())
+                        .factory(SingleAxisRotatingVisual.of(COGWHEEL_MODELS.get(name)))
+                        .apply();
+            }
         });
     }
 
@@ -75,5 +95,9 @@ public final class PrClient {
     static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(PrRegistry.SOULSTAINED_SHAFT_BE.get(),
                 KineticBlockEntityRenderer::new);
+        for (String name : PrCogwheels.NAMES) {
+            event.registerBlockEntityRenderer(PrCogwheels.BLOCK_ENTITIES.get(name).get(),
+                    KineticBlockEntityRenderer::new);
+        }
     }
 }

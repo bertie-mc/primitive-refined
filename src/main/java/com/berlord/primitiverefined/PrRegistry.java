@@ -1,5 +1,6 @@
 package com.berlord.primitiverefined;
 
+import com.berlord.primitiverefined.content.cogwheel.PrCogwheels;
 import com.berlord.primitiverefined.content.controller.PControllerBlock;
 import com.berlord.primitiverefined.content.controller.PControllerBlockEntity;
 import com.berlord.primitiverefined.content.shaft.SoulstainedShaftBlock;
@@ -90,10 +91,15 @@ public final class PrRegistry {
                     .displayItems((params, output) -> {
                         output.accept(P_CONTROLLER_ITEM.get());
                         output.accept(SOULSTAINED_SHAFT_ITEM.get());
+                        PrCogwheels.ITEMS.values().forEach(i -> output.accept(i.get()));
                     })
                     .build());
 
     public static void register(IEventBus modBus) {
+        // Runs the cogwheel family's static block, which registers into the deferred
+        // registers below. Must happen before they are handed to the bus.
+        PrCogwheels.init();
+
         BLOCKS.register(modBus);
         ITEMS.register(modBus);
         BLOCK_ENTITIES.register(modBus);

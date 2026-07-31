@@ -2,69 +2,52 @@ SCOPE OF THE PUBLIC DOMAIN DEDICATION
 
 The dedication in UNLICENSE covers the original code in this repository.
 
-It does not, and cannot, cover third-party material that this project depends
-on or interoperates with - the Minecraft client, NeoForge, and any mod whose
-blocks, items or APIs are referenced here. Those remain under their own terms.
-
-Compile-time dependencies are resolved from public mavens (createmod.net,
-NeoForged, Modrinth) at build time. No third-party jar is committed.
+It does not, and cannot, cover third-party material. Some of the textures here
+are derived from other mods' artwork and remain the property of their authors.
 
 
-CREATE - CODE MIT, ASSETS ALL RIGHTS RESERVED
+THIRD-PARTY ARTWORK - USED WITH PERMISSION
 
-Create's licence splits: everything under its src/main/resources/assets/ is
-All Rights Reserved, and only the code is MIT. So this mod ships **no copy of
-any Create texture or model file**, not even a modified one.
+berlord states that permission has been obtained from the respective authors to
+ship the derived textures listed below. That permission, not any licence term,
+is what makes their inclusion here lawful - Create's assets, Malum, Forbidden &
+Arcanus and Slag 'n Embers are each All Rights Reserved or equivalent, and none
+of them grants this by default.
 
-Where the blocks here need to look like Create's, the model JSON references
-Create's texture *paths* and Minecraft resolves them at runtime:
+Anyone forking or redistributing this repository does NOT inherit that
+permission and must seek their own.
 
-  create:block/rotation_speed_controller
-  create:block/rotation_speed_controller_top
-  create:block/axis
-  create:block/axis_top
+Derived from Create (The Create Team / Creators of Create):
 
-That is a reference, not a redistribution - nothing is copied into this jar,
-and Create is a required dependency in any case, so the paths always resolve.
-The Soulstained Shaft's colour is a runtime tint (a colour handler multiplying
-Create's grey axis texture), not a recoloured copy of the file.
+  block/soulstained_axis.png              from create:block/axis
+  block/soulstained_axis_top.png          from create:block/axis_top
+  block/soulstained_cogwheel_axis.png     from create:block/cogwheel_axis
+  block/obsidiansteel_cogwheel.png        from create:block/cogwheel
+  block/rose_gold_cogwheel.png            from create:block/cogwheel
 
-The geometry in models/block/*.json is authored here from scratch rather than
-adapted from Create's model files, which are assets and therefore reserved.
+  Each is a luminance remap: Create's shading is preserved and only the palette
+  is replaced. Models additionally reference Create's own models and textures by
+  path at runtime (parent "create:block/cogwheel", and the controller's
+  blockstate layering over "create:block/rotation_speed_controller/block").
 
-The same rule shapes the Grid and Crafting Grid front faces. Those blocks are a
-Refined Storage screen set into Create's railway casing, but the casing half is
-never copied: the model references
+Palettes taken from:
 
-  create:block/railway_casing_side
-  create:block/railway_casing
-
-and the only pixels shipped are the ones that differ from it -
-
-  assets/primitive_refined/textures/block/p_grid_front_base.png
-  assets/primitive_refined/textures/block/p_crafting_grid_front_base.png
-
-which are 18 transparent-backed pixels each, forming the enlarged gold corner
-wedges. Their shape is authored here and covered by UNLICENSE. Their four
-colours (#FFEB8C, #F7CB6C, #CEA05A, #724731) are sampled from Create's brass
-palette - colour values, not image data, the same latitude taken above for the
-Soulstained Shaft's runtime tint. See TEXTURES.md.
+  Malum (soul stained steel)               - soulstained_*
+  Forbidden & Arcanus (obsidiansteel)      - obsidiansteel_cogwheel
+  Slag 'n Embers (rose gold)               - rose_gold_cogwheel
 
 
 REFINED STORAGE - MIT
 
-  assets/primitive_refined/textures/block/p_controller_overlay.png
-  assets/primitive_refined/textures/block/p_controller_overlay_off.png
-  assets/primitive_refined/textures/block/p_grid_front_glow.png
-  assets/primitive_refined/textures/block/p_crafting_grid_front_glow.png
+  block/p_controller_overlay_*.png
+  block/p_grid_front_*.png
+  block/p_crafting_grid_front_*.png
 
-These textures are derived from Refined Storage's purple cutouts
-(assets/refinedstorage/textures/block/controller/cutouts/purple.png,
-.../grid/cutouts/purple.png, .../crafting_grid/cutouts/purple.png) by
-Refined Mods, which is MIT licensed:
+Derived from Refined Storage's purple controller and grid cutouts by Refined
+Mods, which is MIT licensed:
 
   The MIT License (MIT)
-  Copyright © 2020 - 2025 Refined Mods
+  Copyright (c) 2020 - 2025 Refined Mods
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -87,18 +70,7 @@ Refined Mods, which is MIT licensed:
 MIT permits this, provided the notice above travels with the files. It does.
 
 
-MALUM - ALL RIGHTS RESERVED
+COMPILE-TIME DEPENDENCIES
 
-Malum's mods.toml declares "All Rights Reserved".
-
-As a temporary placeholder, the Soulstained Shaft and the controller's shaft
-stubs reference
-
-  malum:block/storage_blocks/block_of_soul_stained_steel
-
-That is a path reference resolved by Minecraft at runtime - no Malum pixel is
-copied into or shipped with this jar, exactly as with Create's textures. It does
-mean Malum must be installed for the shaft to render; see README.
-
-This is placeholder art pending our own, and it must be replaced before any
-release that does not sit alongside Malum.
+Resolved from public mavens (createmod.net, NeoForged, Modrinth) at build time.
+No third-party jar is committed.

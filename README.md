@@ -50,13 +50,13 @@ line, and so a later version can restrict which shafts carry a network.
 
 ## Assets
 
-**This mod ships no third-party art at all.** Create's licence makes its `assets/` All
-Rights Reserved even though its code is MIT, and Malum is All Rights Reserved outright. So
-the models reference their texture *paths* and let Minecraft resolve them at runtime — a
-reference, not a redistribution.
+Derived textures are **shipped outright, with permission obtained from the respective
+authors** — see [NOTICE](NOTICE). That permission is personal to this project: a fork does
+not inherit it.
 
-The only textures in the jar are the controller's overlay layers, derived from Refined
-Storage's MIT controller cutout. See [NOTICE](NOTICE).
+Recolours are a luminance remap rather than a hue shift, so Create's shading survives and
+only the palette changes. That matters mechanically as well as visually — the axis
+texture's lengthwise grooves are what make a spinning shaft read as spinning.
 
 ## Deployment status — the packs do not have this mod
 
@@ -71,25 +71,6 @@ It is **not** in `packs/s1-pack`, `packs/bertie-pack`, `packs/full-test-pack` or
 So: a fresh instance built from any pack will not have this mod, and the hand-placed jar
 will be wiped by the next pack sync of that instance. Closing the gap means creating the
 `bertie-mc` repo, tagging `v0.1.0`, and adding it to the pack from the release.
-
-## Temporary: the shaft borrows a Malum texture
-
-The Soulstained Shaft and the controller's shaft stubs currently reference
-
-    malum:block/storage_blocks/block_of_soul_stained_steel
-
-as a placeholder until proper art exists. Malum is **All Rights Reserved**, so it is
-referenced by path and resolved at runtime like Create's - no Malum pixel is in this jar.
-
-Two consequences worth knowing:
-
-- **Malum must be installed** or the shaft renders as a missing texture. It is not
-  declared as a hard dependency, because this is placeholder art and the mod does not
-  otherwise touch Malum. The s1 pack ships Malum, so this holds there.
-- The shaft deliberately carries **no `tintindex`**. It cannot: Create's
-  `KineticBlockEntityRenderer` bakes models into a `SuperByteBuffer` and applies no colour
-  at all, so a tinted shaft is drawn grey the moment it starts spinning. The colour has to
-  live in the texture. Whatever replaces this placeholder must be a real texture too.
 
 ## The one mixin
 
