@@ -14,9 +14,13 @@ Create is a **required** dependency.
 | --- | --- | --- |
 | Primitive Controller | 0 | Controller |
 | Primitive Cable | 0 | Cable |
-| Primitive External Storage | 1 | External Storage |
+| External Reader | 1 | External Storage |
 | Mechanical Grid | 5 | Grid |
 | Mechanical Crafting Grid | 10 | Crafting Grid |
+
+Plus the Arcanetic Shaft and Arcanetic Cog for wiring, and the Arcanetic Gearbox for
+turning a line of shafts a corner — Create parts in this mod's materials, with no storage
+role of their own.
 
 The controller itself is free. You pay for what you hang off it — which is why a bare
 controller spins up on any amount of rotational force, and a network full of crafting
@@ -24,8 +28,9 @@ grids will stall a waterwheel.
 
 ## What is in this build
 
-Four of the five parts exist. The Primitive Cable does not, so nothing forms a
-network yet.
+Four of the five parts exist. **The Primitive Cable does not, so nothing forms a network
+yet** — every block below is a Create machine with the right cost and the right look, and
+none of them store or move a single item. That work starts with the cable.
 
 ### Primitive Controller (`primitive_refined:p_controller`)
 
@@ -93,6 +98,68 @@ is one.
 join no storage network. RS's own grids need cables too, so this waits on the Primitive
 Cable; the intent is to mirror RS's design rather than invent one.
 
+### External Reader (`primitive_refined:external_reader`)
+
+Create's threshold switch, driven by rotation rather than by a comparator. It is the
+network's **External Storage**: one per attached inventory, one stress. Horizontal facing
+like the grids — indicator towards you, shaft on the face away — a deliberate narrowing,
+since Create's own switch can also sit on floors and ceilings but the shaft has to arrive
+somewhere and a horizontal line is where this mod puts it.
+
+Its front is Create's pixels moved, not repainted: the 4x4 hue-rotated red to purple with
+saturation untouched and value lifted, the ring around it scaled down in value alone.
+Create's wood surround, top and bottom are untouched. The back is the **two-depth**
+scheme — 2px perimeter and the middle 4x4 at the block face, everything between one pixel
+in — with that 4x4 being the turning shaft rather than texture. Note this is not the grids'
+back: they use three depths with a sunken well. Both were asked for deliberately.
+
+The indicator down each side is a 4x10 panel, lit throughout while the block turns. It is
+carved into short vertical runs, each carrying a gradient that sweeps purple to magenta to
+a bright peak and advances one step per frame, so the gradient travels along its segment.
+Colours, ramp and cadence — twelve frames at frametime 2 — are measured off
+`refinedstorage:block/controller/cutouts/purple`, because that is how the controller draws
+its traces.
+
+**It is worth knowing what this is not.** An earlier attempt lit and unlit individual
+pixels on a checkerboard, with a flare passing over each. At 4x10 that reads as a static
+checkerboard with white dots skittering across it. Per-pixel twinkle is the wrong model
+for this; flowing gradients along runs is the right one.
+
+Opposite sides run **different textures**, because Minecraft drives every animation off
+the same game time — one texture on both faces is frame-locked and no amount of authoring
+will unstick it.
+
+### Arcanetic Gearbox (`primitive_refined:arcanetic_gearbox`)
+
+Create's gearbox in this mod's materials. `ArcaneticGearboxBlock` extends Create's
+`GearboxBlock` outright, so the awkward part — redirecting rotation around a corner and
+reversing it across the block — stays Create's code and stays correct. The block entity
+type is ours but holds Create's own `GearboxBlockEntity`, the same trick the Arcanetic
+Shaft plays with `BracketedKineticBlockEntity`. **There is no speed or stress stat**: it
+relays at input speed, exactly as Create's does.
+
+The **Vertical Arcanetic Gearbox** is the same block placed on a horizontal axis, via its
+own item — one block, two items, which is how Create ships its own. Create's
+`VerticalGearboxItem` could not be reused: it takes only item properties and resolves
+Create's gearbox internally.
+
+The panel is a per-pixel substitution into Create's own: the light casing ring takes brass
+casing's pixel at the same coordinate, and the wood and shaft socket take
+`create:block/brass_gearbox` — which is the face Create's **sequenced gearshift** puts on
+the two ends its axis runs through. That matters: a gearbox panel has a shaft coming out
+of it, so the face substituted onto it must be one that also has a shaft.
+`create:block/sequenced_gearshift` is the sequencer display on the four sides the axis
+does *not* pass through, and putting that on a face with a shaft in it drops a red display
+strip across the panel. Brightness is what separates the perimeter ring from the socket —
+both are grey, but the socket is nearly black, and treating all grey alike fills the
+socket with casing and erases the hole.
+
+The four shafts needed a visual of their own. Create's `GearboxVisual` names
+`AllPartialModels.SHAFT_HALF` inside its constructor and builds its instance map there, so
+it cannot be subclassed and swapped. `ArcaneticGearboxVisual` is that class's shape
+rewritten against our partial; the only logic in it decides each shaft's **direction**,
+never its speed.
+
 ## Assets
 
 Derived textures are **shipped outright, with permission obtained from the respective
@@ -109,9 +176,23 @@ Released. [`bertie-mc/primitive-refined`](https://github.com/bertie-mc/primitive
 jar attached to each GitHub Release by `release.yml`. The current version is whatever
 `mod_version` in `gradle.properties` says — this file deliberately does not repeat it.
 
-The bertie pack does not currently include it. Add the release with
-`packwiz github add bertie-mc/primitive-refined`; instances should then be synced from
-packwiz rather than populated with hand-copied jars.
+**`packs/s1-pack` does include it** — `mods/primitive-refined.pw.toml`, added with
+`packwiz github add bertie-mc/primitive-refined` and moved forward with `packwiz update`.
+The **s1 demo** instance is synced against that pack. It is *not* in `packs/bertie-pack`,
+`packs/full-test-pack` or `packs/worldgen-pack`; adding it is one `packwiz github add`
+each.
+
+### A hand-copied jar cannot survive a sync — do not try
+
+The obvious shortcut for a quick look in game is to build locally and drop the jar into
+the instance, keeping the filename identical so nothing is duplicated. **It does not
+work.** packwiz records a **hash**, not a filename: the next sync sees the file does not
+match, and re-downloads the released jar over it. This cost a round — a sync ran two
+minutes before the game launched, and three brand-new blocks were simply absent, with the
+log reporting them as unknown registry keys.
+
+So there is no in-game-before-release route for a packwiz-managed instance. Bump, tag,
+let the release build, `packwiz update`, sync. It is about six minutes and it stays put.
 
 ### CI
 
@@ -152,6 +233,9 @@ The blocks were renamed; their ids were not. So:
 | Arcanetic Shaft | `soulstained_shaft` |
 | Arcanetic Cog | `obsidiansteel_cogwheel_soulstained` |
 
+The blocks added since — `external_reader`, `arcanetic_gearbox` — have ids that match
+their names, so the mod now runs two conventions at once.
+
 Deliberate, for now: renaming an id destroys every placed block of that type in every
 existing world, and berlord is actively testing in one. **The window to fix this closes
 the moment anything references these ids** — a recipe, a quest, a tag, another pack.
@@ -166,6 +250,22 @@ berlord has now seen the rebuilt body in game and taken it as it stands, so the 
 the previous round handed off are closed: the sides no longer stretch, the back is
 recessed, the shaft stands in its well, the cogwheel is in the gap, and both light
 correctly. The sunken back was chosen there over the flat one.
+
+### The External Reader and the gearboxes are barely tested
+
+berlord has seen the reader's display and accepted it after three passes at the effect,
+and has called the gearboxes good. Nothing else about either has been checked. In
+particular:
+
+- **The gearbox shafts' directions.** `ArcaneticGearboxVisual`'s rule is transcribed from
+  Create's bytecode, not played. If one of the four turns the wrong way it is a flipped
+  sign in `speedOf`, which decides direction only — magnitude is always the input speed.
+- **The vertical gearbox's placement**, and whether its item model reads right in hand.
+- **The reader's shaft** turning, and its lit/unlit switching under load and overstress.
+- **Whether the two sides' displays visibly differ.** They run different textures with
+  different segment layouts, so they should.
+
+### What the grid body still has not been checked for
 
 Two things about it were **never explicitly looked for**, only assumed from their code:
 
@@ -200,7 +300,27 @@ game never sees.
 berlord looked at this in game and **decided to keep it as it is**, hitbox included. It is
 not a fault and it is not an open question. Do not "align" it.
 
-## Previewing models without launching the game
+## tools/
+
+Four scripts, all runnable from the repo root, none of them part of the build.
+
+| Script | What it does |
+| --- | --- |
+| `extract_assets.py` | Pulls another mod's `assets/` out of its jar, whole, into `tools/extracted/` (gitignored). Everything else here needs it run first. |
+| `preview.py` | Isometric renderer for block models — see below. |
+| `make_reader_textures.py` | Regenerates the External Reader's front, unlit side, and the three glow layers. |
+| `make_gearbox.py` | Regenerates the Arcanetic Gearbox's panel texture, its three models, its shaft partial, blockstate and loot table. |
+
+The two `make_*` scripts are **generators of record**: the textures and models they emit
+are checked in, but they are derived from Create's and Refined Storage's pixels by rule,
+not by hand, and the rules are in the scripts. Change a colour or a substitution there and
+re-run it — do not hand-edit the output, or the next run silently reverts you.
+
+The grids' models are the exception: their generator was never checked in, so
+`p_grid*.json` are hand-maintained, and the four of them must be kept identical below the
+front texture. Their `__comment` blocks carry the structure.
+
+### Previewing models without launching the game
 
 `tools/preview.py` is a small isometric renderer for these block models. It is in the repo
 now, because it had been written from scratch twice by the time it was worth keeping.
@@ -297,7 +417,10 @@ large cogwheel (they did not before - the item must be Create's `CogwheelBlockIt
 Not verified: the controller's shaft stubs spinning, the restored controller glow, and
 anything with Flywheel's backend switched off.
 
-**Nothing from the grid-body rebuild is in that list.** It all postdates the last in-game
-verification session. The whole of the grid section above is previewer work; see Known
-gaps for what to check first. The instance used for that session carried the `v0.1.0`
-release.
+Since then, and confirmed the same way: the rebuilt grid body renders correctly and its
+cogwheel and shaft are lit rather than black; the sunken back was chosen over the flat one
+by looking at both; the Arcanetic Shaft's resting angle was looked at and kept; and the
+gearboxes were called good.
+
+Everything else on the External Reader and the gearboxes is previewer work — see
+Known gaps for what to check first.
