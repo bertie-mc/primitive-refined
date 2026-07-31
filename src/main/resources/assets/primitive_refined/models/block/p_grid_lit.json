@@ -1,5 +1,5 @@
 {
-  "__comment": "Body follows Create's mechanical crafter: two slabs with a gap at z 6-10 and four thin rims. crafter_side has a transparent window at rows 6-9 which Create never samples - the gap in the geometry is where the mechanism shows, and ours shows the cogwheel. Every crafter_side face carries Create's own face rotation; without it a 16x6 uv region lands transposed on a 6x16 face and the sides stretch. The back is the gearbox face at two depths only: the 2px perimeter and the shaft's 4x4 sit at the block face, everything between them is one pixel in. The shaft and the cogwheel are not here: they turn, so they live in block/p_grid_kinetics and are drawn by the block entity's Flywheel visual.",
+  "__comment": "Body follows Create's mechanical crafter: two slabs with a gap at z 6-10 and four thin rims. crafter_side has a transparent window at rows 6-9 which Create never samples - the gap in the geometry is where the mechanism shows, and ours shows the cogwheel. Every crafter_side face carries Create's own face rotation; without it a 16x6 uv region lands transposed on a 6x16 face and the sides stretch. The back is the gearbox face at three depths: the 2px perimeter at the block face, the plate one pixel in, and an 8x8 well three in with the shaft standing at the bottom of it. The shaft and the cogwheel are not here: they turn, so they live in block/p_grid_kinetics and are drawn by the block entity's Flywheel visual.",
   "parent": "block/block",
   "render_type": "cutout",
   "textures": {
@@ -300,11 +300,68 @@
       }
     },
     {
-      "name": "back_plate",
+      "name": "back_well",
+      "from": [
+        4,
+        4,
+        10
+      ],
+      "to": [
+        12,
+        12,
+        13
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "mid_bottom",
       "from": [
         2,
         2,
-        10
+        13
+      ],
+      "to": [
+        14,
+        4,
+        15
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            2,
+            12,
+            14,
+            14
+          ],
+          "texture": "#back"
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "mid_top",
+      "from": [
+        2,
+        12,
+        13
       ],
       "to": [
         14,
@@ -317,7 +374,82 @@
             2,
             2,
             14,
-            14
+            4
+          ],
+          "texture": "#back"
+        },
+        "down": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "mid_west",
+      "from": [
+        2,
+        4,
+        13
+      ],
+      "to": [
+        4,
+        12,
+        15
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            2,
+            4,
+            4,
+            12
+          ],
+          "texture": "#back"
+        },
+        "east": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "mid_east",
+      "from": [
+        12,
+        4,
+        13
+      ],
+      "to": [
+        14,
+        12,
+        15
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            12,
+            4,
+            14,
+            12
+          ],
+          "texture": "#back"
+        },
+        "west": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
           ],
           "texture": "#back"
         }

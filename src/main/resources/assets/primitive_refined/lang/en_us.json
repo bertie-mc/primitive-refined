@@ -4,7 +4,5 @@
   "block.primitive_refined.soulstained_shaft": "Soulstained Shaft",
   "block.primitive_refined.obsidiansteel_cogwheel_soulstained": "Obsidiansteel Cogwheel",
   "block.primitive_refined.p_grid": "Primitive Grid",
-  "block.primitive_refined.p_crafting_grid": "Primitive Crafting Grid",
-  "block.primitive_refined.p_grid_welled": "Primitive Grid (sunken shaft)",
-  "block.primitive_refined.p_crafting_grid_welled": "Primitive Crafting Grid (sunken shaft)"
+  "block.primitive_refined.p_crafting_grid": "Primitive Crafting Grid"
 }

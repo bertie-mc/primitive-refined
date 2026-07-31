@@ -62,20 +62,6 @@ public final class PrRegistry {
     public static final DeferredBlock<PGridBlock> P_CRAFTING_GRID = BLOCKS.register("p_crafting_grid",
             () -> new PGridBlock(gridProperties(), PrStress.CRAFTING_GRID, () -> PrRegistry.P_CRAFTING_GRID_BE.get()));
 
-    /**
-     * The two grids again, identical but for the back of the model: the shaft sunk in a
-     * three-pixel well rather than standing flush in a one-pixel recess.
-     *
-     * <p><b>Temporary.</b> They exist so both backs can be placed side by side in game and
-     * one picked; the loser is to be deleted, along with its models, blockstates, loot
-     * tables and lang entries. They deliberately share the plain grids' block entity
-     * types, so nothing else in the mod has to know about them.
-     */
-    public static final DeferredBlock<PGridBlock> P_GRID_WELLED = BLOCKS.register("p_grid_welled",
-            () -> new PGridBlock(gridProperties(), PrStress.GRID, () -> PrRegistry.P_GRID_BE.get()));
-
-    public static final DeferredBlock<PGridBlock> P_CRAFTING_GRID_WELLED = BLOCKS.register("p_crafting_grid_welled",
-            () -> new PGridBlock(gridProperties(), PrStress.CRAFTING_GRID, () -> PrRegistry.P_CRAFTING_GRID_BE.get()));
 
     private static BlockBehaviour.Properties gridProperties() {
         return BlockBehaviour.Properties.of()
@@ -107,11 +93,6 @@ public final class PrRegistry {
     public static final DeferredItem<BlockItem> P_CRAFTING_GRID_ITEM =
             ITEMS.registerSimpleBlockItem("p_crafting_grid", P_CRAFTING_GRID);
 
-    public static final DeferredItem<BlockItem> P_GRID_WELLED_ITEM =
-            ITEMS.registerSimpleBlockItem("p_grid_welled", P_GRID_WELLED);
-
-    public static final DeferredItem<BlockItem> P_CRAFTING_GRID_WELLED_ITEM =
-            ITEMS.registerSimpleBlockItem("p_crafting_grid_welled", P_CRAFTING_GRID_WELLED);
 
     // --- Block entities ---------------------------------------------------------
 
@@ -133,21 +114,15 @@ public final class PrRegistry {
                             SOULSTAINED_SHAFT.get())
                     .build(null));
 
-    /**
-     * Valid for both backs. One block entity type can serve several blocks, so the
-     * welled variants need no type of their own - and, more to the point, no second
-     * Flywheel visual registration.
-     */
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PGridBlockEntity>> P_GRID_BE =
             BLOCK_ENTITIES.register("p_grid", () -> BlockEntityType.Builder
-                    .of((pos, state) -> new PGridBlockEntity(PrRegistry.P_GRID_BE.get(), pos, state),
-                            P_GRID.get(), P_GRID_WELLED.get())
+                    .of((pos, state) -> new PGridBlockEntity(PrRegistry.P_GRID_BE.get(), pos, state), P_GRID.get())
                     .build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PGridBlockEntity>> P_CRAFTING_GRID_BE =
             BLOCK_ENTITIES.register("p_crafting_grid", () -> BlockEntityType.Builder
                     .of((pos, state) -> new PGridBlockEntity(PrRegistry.P_CRAFTING_GRID_BE.get(), pos, state),
-                            P_CRAFTING_GRID.get(), P_CRAFTING_GRID_WELLED.get())
+                            P_CRAFTING_GRID.get())
                     .build(null));
 
     // --- Creative tab -----------------------------------------------------------
@@ -161,8 +136,6 @@ public final class PrRegistry {
                         output.accept(SOULSTAINED_SHAFT_ITEM.get());
                         output.accept(P_GRID_ITEM.get());
                         output.accept(P_CRAFTING_GRID_ITEM.get());
-                        output.accept(P_GRID_WELLED_ITEM.get());
-                        output.accept(P_CRAFTING_GRID_WELLED_ITEM.get());
                         PrCogwheels.ITEMS.values().forEach(i -> output.accept(i.get()));
                     })
                     .build());

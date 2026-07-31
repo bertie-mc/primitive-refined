@@ -65,22 +65,16 @@ z 6-10 and four thin rims. Every `crafter_side` face carries **Create's own face
 `rotation`** — without it a 16x6 uv region lands transposed on a 6x16 face and every side
 of the block stretches.
 
-The back is the gearbox face at **two depths only**: the two-pixel perimeter and the
-shaft's 4x4 sit at the block face, everything between them is one pixel in. The perimeter
-is a picture frame of four bars — full-width top and bottom, inset sides — because that is
-the arrangement in which no two faces are ever coplanar, and coplanar is what z-fights.
-The plate behind runs across the shaft's square as well, so with the shaft's visual absent
-that square reads as the dark hole the texture already draws there, not as a hole through
-the block.
+The back is the gearbox face at **three depths**: the two-pixel perimeter at the block
+face, the plate one pixel in, and an 8x8 well three in with the shaft standing at the
+bottom of it. Each step is a picture frame of four bars — full-width top and bottom, inset
+sides — because that is the arrangement in which no two faces are ever coplanar, and
+coplanar is what z-fights.
 
-### Two backs, pending a decision
-
-`p_grid_welled` and `p_crafting_grid_welled` are the same blocks with the shaft sunk in a
-three-pixel well instead — a first attempt at reading the gearbox face, kept only so both
-can be placed side by side in game. **One of the two sets is to be deleted** once berlord
-picks: its models, blockstates, loot tables, lang entries and registry lines. They share
-the plain grids' block entity types on purpose, so nothing else in the mod knows they
-exist.
+That deep well is a **deliberate choice, not a reading of the reference.** The gearbox
+texture is two depths: perimeter and shaft's 4x4 at the block face, everything between one
+pixel in. Both were built and placed side by side in game, and berlord picked the sunken
+one — it reads better than it measures. Do not "correct" it back to the texture.
 
 The shaft and the cogwheel turn, so they are **not in the block model at all**. They live
 in `block/p_grid_kinetics` and are drawn by the block entity's Flywheel visual. A visual
@@ -152,28 +146,23 @@ quietly losing the connection.
 
 ## Known gaps
 
-### The rebuilt grid body has not been seen in game
+### What the grid body still has not been checked for
 
-The six faults the previous round left in the grid body are all addressed, but the rebuild
-was done against the previewer, not the game. berlord's in-game session predates it. So
-everything in the grid section above — the recessed back, the shaft standing in its well,
-the cogwheel turning in the gap, cogwheels meshing against the sides — is **unverified**.
+berlord has now seen the rebuilt body in game and taken it as it stands, so the six faults
+the previous round handed off are closed: the sides no longer stretch, the back is
+recessed, the shaft stands in its well, the cogwheel is in the gap, and both light
+correctly. The sunken back was chosen there over the flat one.
 
-What *has* been checked, short of launching: the mod builds; no two faces in the block
-model are coplanar and overlapping (the z-fighting case, checked by script); and the
-previewer that produced it renders Create's own `mechanical_crafter` correctly, which is
-the model that exercises uv rotation on all six faces.
+Two things about it were **never explicitly looked for**, only assumed from their code:
 
-There is also an open decision: the two backs above ship side by side, and one set has to
-go once it has been looked at.
-
-The one to look at hardest is the visual. `SingleAxisRotatingVisual` — what the controller
-and the shaft use — turns the model onto the rotation *axis*, and an axis has no sign, so
-a model with a shaft at one end only lands on the wrong end for two of the four facings.
-The controller's stubs get away with it by being symmetric. The grids use
-`OrientedRotatingVisual.backHorizontal` instead, which turns SOUTH onto
-`HORIZONTAL_FACING.getOpposite()` — a direction, not an axis — and is what Create drives
-its own mechanical crafter with. That reasoning is from the bytecode, not from play.
+- **Cogwheels meshing against the sides.** `PGridBlock` is an `ICogWheel`, so a cogwheel
+  laid alongside on a parallel axis should mesh and counter-rotate, the way Create's
+  crafters do. Nobody has put one there.
+- **The visual on all four facings.** `OrientedRotatingVisual.backHorizontal` turns SOUTH
+  onto `HORIZONTAL_FACING.getOpposite()` — a direction, so the sign is right, unlike
+  `SingleAxisRotatingVisual`, which turns onto the *axis* and would land a one-ended shaft
+  on the wrong end for two facings out of four. That reasoning is from the bytecode. A
+  grid facing each of north/east/south/west would confirm it in ten seconds.
 
 ### Elsewhere
 
