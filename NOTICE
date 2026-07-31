@@ -32,14 +32,35 @@ Create's grey axis texture), not a recoloured copy of the file.
 The geometry in models/block/*.json is authored here from scratch rather than
 adapted from Create's model files, which are assets and therefore reserved.
 
+The same rule shapes the Grid and Crafting Grid front faces. Those blocks are a
+Refined Storage screen set into Create's railway casing, but the casing half is
+never copied: the model references
+
+  create:block/railway_casing_side
+  create:block/railway_casing
+
+and the only pixels shipped are the ones that differ from it -
+
+  assets/primitive_refined/textures/block/p_grid_front_base.png
+  assets/primitive_refined/textures/block/p_crafting_grid_front_base.png
+
+which are 18 transparent-backed pixels each, forming the enlarged gold corner
+wedges. Their shape is authored here and covered by UNLICENSE. Their four
+colours (#FFEB8C, #F7CB6C, #CEA05A, #724731) are sampled from Create's brass
+palette - colour values, not image data, the same latitude taken above for the
+Soulstained Shaft's runtime tint. See TEXTURES.md.
+
 
 REFINED STORAGE - MIT
 
   assets/primitive_refined/textures/block/p_controller_overlay.png
   assets/primitive_refined/textures/block/p_controller_overlay_off.png
+  assets/primitive_refined/textures/block/p_grid_front_glow.png
+  assets/primitive_refined/textures/block/p_crafting_grid_front_glow.png
 
-These two textures are derived from Refined Storage's purple controller cutout
-(assets/refinedstorage/textures/block/controller/cutouts/purple.png) by
+These textures are derived from Refined Storage's purple cutouts
+(assets/refinedstorage/textures/block/controller/cutouts/purple.png,
+.../grid/cutouts/purple.png, .../crafting_grid/cutouts/purple.png) by
 Refined Mods, which is MIT licensed:
 
   The MIT License (MIT)
