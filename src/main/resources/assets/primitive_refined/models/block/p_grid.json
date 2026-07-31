@@ -1,4 +1,5 @@
 {
+  "parent": "block/block",
   "__comment": "Mechanical crafter sides, Refined Storage screen on the front, the sequenced gearshift's shaft face on the back. Authored facing north; the blockstate rotates it. Unlit.",
   "render_type": "cutout",
   "textures": {
@@ -8,9 +9,79 @@
     "side": "create:block/crafter_side",
     "shaft": "primitive_refined:block/soulstained_axis",
     "shaft_end": "primitive_refined:block/soulstained_axis_top",
-    "particle": "create:block/crafter_side"
+    "particle": "create:block/crafter_side",
+    "core": "create:block/brass_gearbox"
   },
   "elements": [
+    {
+      "name": "core",
+      "from": [
+        1,
+        1,
+        1
+      ],
+      "to": [
+        15,
+        15,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#core"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#core"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#core"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#core"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#core"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#core"
+        }
+      }
+    },
     {
       "name": "body",
       "from": [
