@@ -115,4 +115,13 @@ quietly losing the connection.
   hand through `CachedBuffers.partial` and that path is untested. The body and everything
   else is unaffected.
 - **No recipes.** Both blocks are creative-tab only so far.
-- Nothing here has been verified in a running client yet.
+
+## Verified in game
+
+Confirmed by berlord in the s1 demo instance: the controller renders and lights, its
+goggle readout reports every lit condition, it takes power both through its horizontal
+shaft line and from a large cogwheel above (the mixin), it drives that cogwheel, and the
+Soulstained Shaft relays force and spins.
+
+Not yet verified: the controller's shaft stubs spinning (added last, untested), and
+anything with Flywheel's backend switched off.
