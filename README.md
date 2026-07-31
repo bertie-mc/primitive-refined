@@ -112,13 +112,14 @@ texture's lengthwise grooves are what make a spinning shaft read as spinning.
 ## Deployment status
 
 Released. [`bertie-mc/primitive-refined`](https://github.com/bertie-mc/primitive-refined),
-tag `v0.1.0`, jar attached to the GitHub Release by `release.yml`.
+jar attached to each GitHub Release by `release.yml`. The current version is whatever
+`mod_version` in `gradle.properties` says — this file deliberately does not repeat it.
 
 `packs/s1-pack` consumes it — `mods/primitive-refined.pw.toml`, added with
-`packwiz github add bertie-mc/primitive-refined`, pinned to `v0.1.0`. The **s1 demo**
-instance has been synced against that pack, which replaced the hand-copied jar that had
-been sitting there since before the grid rebuild. Nothing is hand-copied any more; a
-re-sync now brings the released build.
+`packwiz github add bertie-mc/primitive-refined` and moved on with `packwiz update`. The
+**s1 demo** instance is synced against that pack, which replaced the hand-copied jar that
+had been sitting there since before the grid rebuild. Nothing is hand-copied any more; a
+re-sync brings the released build.
 
 It is **not** in `packs/bertie-pack`, `packs/full-test-pack` or `packs/worldgen-pack`.
 Adding it is one `packwiz github add` in each, whenever those packs want it.
