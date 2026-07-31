@@ -2,6 +2,7 @@ package com.berlord.primitiverefined.content.controller;
 
 import java.util.function.Predicate;
 
+import com.berlord.primitiverefined.PrKinetics;
 import com.berlord.primitiverefined.PrRegistry;
 import com.simibubi.create.content.kinetics.base.HorizontalAxisKineticBlock;
 import com.simibubi.create.content.kinetics.base.IRotate;
@@ -40,7 +41,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * makes it operable; without one the controller stays dark no matter how fast the shaft
  * line under it is turning.
  */
-public class PControllerBlock extends HorizontalAxisKineticBlock implements IBE<PControllerBlockEntity> {
+public class PControllerBlock extends HorizontalAxisKineticBlock
+        implements IBE<PControllerBlockEntity>, PrKinetics.Arcanetic {
 
     /** Lit whenever the controller is actually running - drives the emissive overlay. */
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
@@ -75,6 +77,20 @@ public class PControllerBlock extends HorizontalAxisKineticBlock implements IBE<
     @Override
     public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {
         return face.getAxis() == state.getValue(HORIZONTAL_AXIS);
+    }
+
+    /**
+     * The one place the two kinetic families touch.
+     *
+     * <p>Everything under the cogwheel is arcanetic; the top face is Create's, because that
+     * is where a Create large cogwheel sits, and that cogwheel is the only way rotational
+     * force gets into a primitive network. Declaring the face rather than the block is what
+     * lets the same block be driven by Create and drive arcanetic parts without either
+     * family leaking into the other.
+     */
+    @Override
+    public boolean isArcaneticFace(BlockState state, Direction face) {
+        return face != Direction.UP;
     }
 
     /**

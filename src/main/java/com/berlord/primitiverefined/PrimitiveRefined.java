@@ -9,10 +9,15 @@ import net.neoforged.fml.common.Mod;
  * Primitive Refined - an early-game, Create-powered precursor to Refined Storage.
  *
  * <p>The machines here are one-to-one in behaviour with their Refined Storage
- * counterparts, but they run on rotational force: the controller reports the network's
- * total cost as a Create stress impact instead of drawing FE.
+ * counterparts because they <em>are</em> Refined Storage: every block is an RS network
+ * node, and the grids drive RS's own menus and screens. What is ours is the power and the
+ * wiring. There is no energy anywhere in the mod - the network runs on rotational force,
+ * each part charges its cost as a Create stress impact, and the shafts and cogs that carry
+ * that force are the cables that carry the network.
  *
- * <p>This build is the demo: the Primitive Controller and the Soulstained Shaft.
+ * <p>Two families of kinetics, and they do not mix. Arcanetic parts refuse to mesh with
+ * Create's own, and a block placed where they would have met pops off. The one crossing is
+ * the large cogwheel on the controller's roof, which is how force gets in at all.
  */
 @Mod(PrimitiveRefined.MOD_ID)
 public class PrimitiveRefined {

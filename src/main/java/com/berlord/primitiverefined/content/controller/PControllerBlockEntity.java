@@ -1,6 +1,11 @@
 package com.berlord.primitiverefined.content.controller;
 
 import com.berlord.primitiverefined.PrStress;
+import com.berlord.primitiverefined.network.PrControllerNode;
+import com.berlord.primitiverefined.network.PrNode;
+import com.berlord.primitiverefined.network.PrNodeHost;
+import com.berlord.primitiverefined.network.PrNodes;
+import com.refinedmods.refinedstorage.api.network.Network;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
@@ -10,30 +15,59 @@ import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class PControllerBlockEntity extends KineticBlockEntity {
+/**
+ * The controller is the only way rotational force gets into a primitive network.
+ *
+ * <p>A Create large cogwheel drives it from above, through Create's own kinetics; the shaft
+ * line running through it underneath is arcanetic, and everything downstream of that is the
+ * network. The block is the bridge between the two kinetic families and the host of the
+ * storage network at once.
+ */
+public class PControllerBlockEntity extends KineticBlockEntity implements PrNodeHost {
 
-    /** Cached total demand of the attached network, so the network is not re-walked per tick. */
+    private final PrNode node = new PrNode(this, new PrControllerNode(), "primitive_controller");
+
+    /** The network's total cost, for the goggle readout. Never charged - see {@link PrStress}. */
     private float demand = PrStress.CONTROLLER;
 
     public PControllerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 
+    @Override
+    public PrNode prNode() {
+        return node;
+    }
+
     /**
-     * The controller reports the whole network's cost as its own impact. With nothing
-     * attached this is zero, which is what makes a bare controller spin up on any amount
-     * of rotational force.
+     * Zero. Every part on the network charges its own impact where it stands, so the sum
+     * is already on Create's stress network by the time this is asked; billing it here as
+     * well would charge the same grids twice.
      */
     @Override
     public float calculateStressApplied() {
-        this.lastStressApplied = demand;
-        return demand;
+        this.lastStressApplied = PrStress.CONTROLLER;
+        return PrStress.CONTROLLER;
+    }
+
+    @Override
+    public void clearRemoved() {
+        super.clearRemoved();
+        node.onClearRemoved();
+    }
+
+    /**
+     * {@code remove}, not {@code setRemoved}: Create's {@code SmartBlockEntity} makes the
+     * latter final and calls this from inside it, which is the hook it leaves open.
+     */
+    @Override
+    public void remove() {
+        super.remove();
+        node.onSetRemoved();
     }
 
     @Override
@@ -55,22 +89,20 @@ public class PControllerBlockEntity extends KineticBlockEntity {
     }
 
     /**
-     * Re-reads the network cost and the cogwheel, and flips the lit state if either
-     * changed. Cheap enough for the lazy tick; the only expensive part is the network walk
-     * and that is what {@link #demand} caches.
+     * Re-reads the cogwheel and the network, and flips the lit state if either changed.
+     *
+     * <p>The controller lights on the same three conditions it always did - a valid
+     * cogwheel above, turning, not overstressed - plus a fourth now that a network can
+     * exist: it must be the only controller on it.
      */
     private void refresh() {
         if (level == null || level.isClientSide) {
             return;
         }
 
-        float newDemand = PrStress.totalDemand(level, worldPosition);
-        if (newDemand != demand) {
-            demand = newDemand;
-            // Tell Create to recompute the network's stress budget; without this the old
-            // impact stays in the network total until something else disturbs it.
-            networkDirty = true;
-        }
+        boolean powered = PrNodes.isPowered(this);
+        node.refresh(powered);
+        demand = PrStress.networkDemand(node.network());
 
         BlockState state = getBlockState();
         if (!(state.getBlock() instanceof PControllerBlock)) {
@@ -78,8 +110,8 @@ public class PControllerBlockEntity extends KineticBlockEntity {
         }
 
         boolean shouldBeLit = PControllerBlock.hasValidCogwheelAbove(level, worldPosition, state)
-                && getSpeed() != 0
-                && !isOverStressed();
+                && powered
+                && node.hasExactlyOneController();
 
         if (state.getValue(PControllerBlock.LIT) != shouldBeLit) {
             // switchToBlockState rather than setBlock: it swaps the state without tearing
@@ -135,8 +167,8 @@ public class PControllerBlockEntity extends KineticBlockEntity {
     /**
      * Reports every condition the lit state depends on, through the goggles.
      *
-     * <p>"It does not glow" has three possible causes and they are indistinguishable from
-     * the outside, so the block states them itself rather than us guessing at them one
+     * <p>"It does not glow" has four possible causes now and they are indistinguishable
+     * from the outside, so the block states them itself rather than us guessing at them one
      * build at a time.
      */
     @Override
@@ -166,6 +198,12 @@ public class PControllerBlockEntity extends KineticBlockEntity {
         }
         line(tooltip, "speed", getSpeed() != 0, String.format("%.1f rpm", getSpeed()));
         line(tooltip, "not overstressed", !isOverStressed(), isOverStressed() ? "overstressed" : "ok");
+
+        Network network = node.network();
+        int controllers = network == null ? 0 : PrNode.controllerCount(network);
+        line(tooltip, "controllers on network", controllers == 1,
+                controllers == 0 ? "none - not on a network"
+                        : controllers == 1 ? "1" : controllers + " - a system takes one");
         line(tooltip, "network demand", true, String.format("%.1f su", demand));
         if (isController) {
             line(tooltip, "lit", state.getValue(PControllerBlock.LIT),
@@ -180,17 +218,5 @@ public class PControllerBlockEntity extends KineticBlockEntity {
                         .withStyle(ok ? ChatFormatting.GREEN : ChatFormatting.RED))
                 .append(Component.literal(label + ": ").withStyle(ChatFormatting.GRAY))
                 .append(Component.literal(detail).withStyle(ChatFormatting.WHITE)));
-    }
-
-    @Override
-    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        tag.putFloat("Demand", demand);
-        super.write(tag, registries, clientPacket);
-    }
-
-    @Override
-    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
-        demand = tag.getFloat("Demand");
-        super.read(tag, registries, clientPacket);
     }
 }

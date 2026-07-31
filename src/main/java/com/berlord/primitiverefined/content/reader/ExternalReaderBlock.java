@@ -1,5 +1,6 @@
 package com.berlord.primitiverefined.content.reader;
 
+import com.berlord.primitiverefined.PrKinetics;
 import com.berlord.primitiverefined.PrRegistry;
 import com.simibubi.create.content.kinetics.base.HorizontalKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
@@ -29,7 +30,7 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
  * machines put it.
  */
 public class ExternalReaderBlock extends HorizontalKineticBlock
-        implements IBE<ExternalReaderBlockEntity> {
+        implements IBE<ExternalReaderBlockEntity>, PrKinetics.Arcanetic {
 
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 

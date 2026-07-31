@@ -3,9 +3,13 @@ package com.berlord.primitiverefined.client;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.berlord.primitiverefined.PrMenus;
 import com.berlord.primitiverefined.PrRegistry;
 import com.berlord.primitiverefined.content.cogwheel.PrCogwheels;
 import com.berlord.primitiverefined.PrimitiveRefined;
+import com.berlord.primitiverefined.content.grid.PGridContainerMenu;
+import com.refinedmods.refinedstorage.common.grid.screen.CraftingGridScreen;
+import com.refinedmods.refinedstorage.common.grid.screen.GridScreen;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 import com.simibubi.create.content.kinetics.base.OrientedRotatingVisual;
 import com.simibubi.create.content.kinetics.base.SingleAxisRotatingVisual;
@@ -18,6 +22,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 @EventBusSubscriber(modid = PrimitiveRefined.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class PrClient {
@@ -124,6 +129,24 @@ public final class PrClient {
                             new ArcaneticGearboxVisual(ctx, be, partialTick, GEARBOX_SHAFT))
                     .apply();
         });
+    }
+
+    /**
+     * The grids' screens are Refined Storage's, unmodified.
+     *
+     * <p>This is the line that makes "the interfaces open the same" literally true: the
+     * sorting buttons, the search box and its query syntax, the view modes, the resource
+     * tooltips and the 3x3 matrix are all RS's screen classes, bound to menu types this mod
+     * registered. Nothing about the grid's front end is reimplemented, so nothing about it
+     * can drift from RS's.
+     */
+    @SubscribeEvent
+    static void registerScreens(RegisterMenuScreensEvent event) {
+        // The type argument is spelled out: GridScreen is generic in its menu, and an
+        // unparameterised GridScreen::new leaves javac unable to infer the screen half of
+        // ScreenConstructor's two type variables from the menu half.
+        event.register(PrMenus.GRID.get(), GridScreen<PGridContainerMenu>::new);
+        event.register(PrMenus.CRAFTING_GRID.get(), CraftingGridScreen::new);
     }
 
     /**

@@ -70,6 +70,17 @@ dependencies {
     // being drawn on top of the spinning one.
     compileOnly("dev.engine-room.flywheel:flywheel-neoforge-1.21.1:${flywheel_version}") { transitive = false }
 
+    // Refined Storage, also a hard dependency. The storage half of this mod is not a
+    // lookalike of RS - it is RS: our blocks are RS network nodes, our grids drive RS's
+    // own container menus and screens, and the External Reader is an RS external storage.
+    // Only the topology is ours, and it is the arcanetic kinetic graph.
+    //
+    // Modrinth's maven, because Refined Storage 2 publishes no artifact to Maven Central
+    // under a coordinate that resolves for 1.21.1. `refined-storage` is the project slug;
+    // the version is the Modrinth version_number of the jar pinned in
+    // packs/*/mods/refined-storage.pw.toml. Keep the two in step.
+    compileOnly("maven.modrinth:refined-storage:${refined_storage_version}") { transitive = false }
+
     // A dev-time `runClient` would additionally need the real Create jar on the
     // runtime classpath. It is deliberately absent: this project builds a jar for the
     // packwiz packs and is tested in a Prism instance, not in a Gradle run.

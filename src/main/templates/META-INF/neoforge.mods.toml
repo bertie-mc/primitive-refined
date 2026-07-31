@@ -40,3 +40,14 @@ type="required"
 versionRange="[6.0,)"
 ordering="AFTER"
 side="BOTH"
+
+# Also hard, and for the same kind of reason. The storage half of this mod is not a
+# lookalike of Refined Storage - every block here is an RS network node, the grids run RS's
+# own container menus and screens, and the External Reader is an RS external storage. Only
+# the topology is ours, and it is the arcanetic kinetic graph.
+[[dependencies.${mod_id}]]
+modId="refinedstorage"
+type="required"
+versionRange="[2.0,)"
+ordering="AFTER"
+side="BOTH"

@@ -1,5 +1,6 @@
 package com.berlord.primitiverefined.mixin;
 
+import com.berlord.primitiverefined.PrKinetics;
 import com.berlord.primitiverefined.content.controller.PControllerBlock;
 import com.simibubi.create.content.kinetics.RotationPropagator;
 import com.simibubi.create.content.kinetics.base.IRotate;
@@ -72,5 +73,36 @@ public class RotationPropagatorMixin {
         // propagateRotationTo. The two must agree or Create sees a speed conflict and
         // tears the network down.
         cir.setReturnValue(1f);
+    }
+
+    /**
+     * Keeps the arcanetic family and Create's own from meshing.
+     *
+     * <p>Declared after the bridge above on purpose. Mixin runs the callbacks at a shared
+     * injection point in declaration order and stops at the first that cancels, so the
+     * controller's sanctioned large-cogwheel connection is decided before this ever sees
+     * it. (It would survive either order - the controller's top face is Create's, so that
+     * pair is not cross-family - but the ordering makes the intent explicit rather than
+     * incidental.)
+     *
+     * <p>Returning zero here is the whole of the incompatibility.
+     * {@code getRotationSpeedModifier} is what {@code getConveyedSpeed} multiplies by and
+     * what {@code isConnected} tests, so zero means both "carries no speed" and "not
+     * connected" - the pair is invisible to every part of the propagator at once. The
+     * block popping off is handled separately, in {@code PrFamilyGuard}: this method is
+     * asked the question far too often, and from inside propagation, to be the place that
+     * destroys anything.
+     */
+    @Inject(method = "getRotationSpeedModifier", at = @At("HEAD"), cancellable = true, remap = false)
+    private static void primitive_refined$refuseCrossFamily(
+            KineticBlockEntity from, KineticBlockEntity to, CallbackInfoReturnable<Float> cir) {
+
+        if (PrKinetics.vetoSuppressed()) {
+            // PrFamilyGuard is asking what Create *would* have done. Answer honestly.
+            return;
+        }
+        if (PrKinetics.crossFamily(from, to)) {
+            cir.setReturnValue(0f);
+        }
     }
 }

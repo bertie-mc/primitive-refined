@@ -1,15 +1,28 @@
 package com.berlord.primitiverefined;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
+import com.berlord.primitiverefined.content.grid.PGridBlock;
+import com.berlord.primitiverefined.content.reader.ExternalReaderBlock;
+import com.refinedmods.refinedstorage.api.network.Network;
+import com.refinedmods.refinedstorage.api.network.node.GraphNetworkComponent;
+import com.refinedmods.refinedstorage.api.network.node.container.NetworkNodeContainer;
+import com.refinedmods.refinedstorage.common.api.support.network.InWorldNetworkNodeContainer;
+
+import javax.annotation.Nullable;
 
 /**
- * The stress cost of a primitive network.
+ * What a primitive network costs to keep turning.
  *
- * <p>The controller itself is free. Everything hanging off it is not, and the controller
- * simply reports the sum as its own Create stress impact - so a network you have not
- * built yet costs nothing to spin, and one full of crafting grids will stall a
- * waterwheel. That is the whole design: you pay for the parts, not for the box.
+ * <p>The controller itself is free. Everything hanging off it is not - and each part
+ * charges its own cost, on Create's kinetic network, at the block that incurs it. The sum
+ * is therefore Create's to compute and Create's to enforce: run more grids than the
+ * waterwheel can carry and the whole line stalls, exactly as it would with any other
+ * overloaded Create machine.
+ *
+ * <p>{@link #networkDemand} exists for the controller's goggle readout only. It is the same
+ * number Create is already charging, gathered so the controller can state it in one place -
+ * "this network wants 21 su" is a more useful thing to read off the box than a stress
+ * figure per block. <b>It is never charged.</b> Adding it to the controller's own impact
+ * would bill every grid twice.
  */
 public final class PrStress {
 
@@ -34,21 +47,35 @@ public final class PrStress {
      */
     public static final float CONTROLLER = 0f;
 
-    /** Implemented by every primitive network block that adds load to its controller. */
-    public interface Part {
-        float primitiveStressDemand();
+    /**
+     * Total stress the parts on this network demand, for display.
+     *
+     * <p>Read off the block states rather than the block entities, because a container's
+     * block entity may be unloaded while the network still holds it, and a stress cost is a
+     * property of the block either way.
+     */
+    public static float networkDemand(@Nullable Network network) {
+        if (network == null) {
+            return CONTROLLER;
+        }
+        float total = CONTROLLER;
+        for (NetworkNodeContainer container : network.getComponent(GraphNetworkComponent.class).getContainers()) {
+            if (!(container instanceof InWorldNetworkNodeContainer inWorld)) {
+                continue;
+            }
+            total += costOf(inWorld);
+        }
+        return total;
     }
 
-    /**
-     * Total stress the network attached to {@code controllerPos} demands.
-     *
-     * <p>Demo build: the cable block does not
-     * exist yet, so there is nothing to walk and the answer is always {@link #CONTROLLER}.
-     * When the cable block lands this becomes a flood fill from the controller over
-     * connected cables, summing {@link Part#primitiveStressDemand()} for everything it
-     * reaches. The constants above are already the values that walk will use.
-     */
-    public static float totalDemand(Level level, BlockPos controllerPos) {
-        return CONTROLLER;
+    private static float costOf(InWorldNetworkNodeContainer container) {
+        var block = container.getBlockState().getBlock();
+        if (block instanceof PGridBlock grid) {
+            return grid.stressImpact();
+        }
+        if (block instanceof ExternalReaderBlock) {
+            return EXTERNAL_READER;
+        }
+        return CABLE;
     }
 }

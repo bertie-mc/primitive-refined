@@ -2,13 +2,19 @@ package com.berlord.primitiverefined.content.grid;
 
 import java.util.function.Supplier;
 
+import com.berlord.primitiverefined.PrKinetics;
+
 import com.simibubi.create.content.kinetics.base.HorizontalKineticBlock;
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
 import com.simibubi.create.foundation.block.IBE;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -16,6 +22,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.BlockHitResult;
 
 /**
  * The Primitive Grid and Primitive Crafting Grid.
@@ -33,7 +40,8 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
  * through the window in the rims, and a cogwheel laid alongside is expected to mesh with
  * it. Small cog, not large, and not a dedicated cogwheel - those defaults are right.
  */
-public class PGridBlock extends HorizontalKineticBlock implements IBE<PGridBlockEntity>, ICogWheel {
+public class PGridBlock extends HorizontalKineticBlock
+        implements IBE<PGridBlockEntity>, ICogWheel, PrKinetics.Arcanetic {
 
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
@@ -78,6 +86,38 @@ public class PGridBlock extends HorizontalKineticBlock implements IBE<PGridBlock
     @Override
     public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {
         return face == state.getValue(HORIZONTAL_FACING).getOpposite();
+    }
+
+    /**
+     * Opens the grid.
+     *
+     * <p>It opens whether or not the network is running, the way Refined Storage's own grid
+     * does - a dark, empty grid is a readable answer to "is this thing on", and closing the
+     * screen in the player's face is not.
+     */
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
+                                               BlockHitResult hit) {
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+        if (!(level.getBlockEntity(pos) instanceof PGridBlockEntity grid)
+                || !(player instanceof ServerPlayer serverPlayer)) {
+            return InteractionResult.PASS;
+        }
+        serverPlayer.openMenu(grid, buf -> grid.getMenuCodec().encode(buf, grid.getMenuData()));
+        return InteractionResult.CONSUME;
+    }
+
+    /** The crafting grid's 3x3 is a real inventory, so breaking the block has to give it back. */
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState,
+                         boolean movedByPiston) {
+        if (!state.is(newState.getBlock())
+                && level.getBlockEntity(pos) instanceof PCraftingGridBlockEntity crafting) {
+            crafting.dropMatrix();
+        }
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Override

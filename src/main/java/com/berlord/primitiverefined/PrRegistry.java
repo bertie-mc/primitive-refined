@@ -4,14 +4,15 @@ import com.berlord.primitiverefined.content.cogwheel.PrCogwheels;
 import com.berlord.primitiverefined.content.controller.PControllerBlock;
 import com.berlord.primitiverefined.content.controller.PControllerBlockEntity;
 import com.berlord.primitiverefined.content.gearbox.ArcaneticGearboxBlock;
+import com.berlord.primitiverefined.content.gearbox.ArcaneticGearboxBlockEntity;
 import com.berlord.primitiverefined.content.gearbox.VerticalArcaneticGearboxItem;
+import com.berlord.primitiverefined.content.grid.PCraftingGridBlockEntity;
 import com.berlord.primitiverefined.content.grid.PGridBlock;
 import com.berlord.primitiverefined.content.reader.ExternalReaderBlock;
 import com.berlord.primitiverefined.content.reader.ExternalReaderBlockEntity;
 import com.berlord.primitiverefined.content.grid.PGridBlockEntity;
 import com.berlord.primitiverefined.content.shaft.SoulstainedShaftBlock;
-import com.simibubi.create.content.kinetics.gearbox.GearboxBlockEntity;
-import com.simibubi.create.content.kinetics.simpleRelays.BracketedKineticBlockEntity;
+import com.berlord.primitiverefined.network.ArcaneticRelayBlockEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -146,12 +147,13 @@ public final class PrRegistry {
     /**
      * Create's own shaft uses {@code BracketedKineticBlockEntity}, and
      * {@code AbstractSimpleShaftBlock} was written against it - notably
-     * {@code removeBracket}, which expects the bracket behaviour to be present. Reusing it
-     * keeps the soulstained shaft behaviourally identical instead of almost identical.
+     * {@code removeBracket}, which expects the bracket behaviour to be present.
+     * {@link ArcaneticRelayBlockEntity} extends that class rather than replacing it, so the
+     * shaft stays behaviourally identical and gains a network node.
      */
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BracketedKineticBlockEntity>> SOULSTAINED_SHAFT_BE =
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ArcaneticRelayBlockEntity>> SOULSTAINED_SHAFT_BE =
             BLOCK_ENTITIES.register("soulstained_shaft", () -> BlockEntityType.Builder
-                    .of((pos, state) -> new BracketedKineticBlockEntity(PrRegistry.SOULSTAINED_SHAFT_BE.get(), pos, state),
+                    .of((pos, state) -> new ArcaneticRelayBlockEntity(PrRegistry.SOULSTAINED_SHAFT_BE.get(), pos, state),
                             SOULSTAINED_SHAFT.get())
                     .build(null));
 
@@ -160,9 +162,9 @@ public final class PrRegistry {
                     .of((pos, state) -> new PGridBlockEntity(PrRegistry.P_GRID_BE.get(), pos, state), P_GRID.get())
                     .build(null));
 
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PGridBlockEntity>> P_CRAFTING_GRID_BE =
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PCraftingGridBlockEntity>> P_CRAFTING_GRID_BE =
             BLOCK_ENTITIES.register("p_crafting_grid", () -> BlockEntityType.Builder
-                    .of((pos, state) -> new PGridBlockEntity(PrRegistry.P_CRAFTING_GRID_BE.get(), pos, state),
+                    .of((pos, state) -> new PCraftingGridBlockEntity(PrRegistry.P_CRAFTING_GRID_BE.get(), pos, state),
                             P_CRAFTING_GRID.get())
                     .build(null));
 
@@ -172,10 +174,10 @@ public final class PrRegistry {
                             EXTERNAL_READER.get())
                     .build(null));
 
-    /** Create's own GearboxBlockEntity, registered against our block. */
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GearboxBlockEntity>> ARCANETIC_GEARBOX_BE =
+    /** Create's own GearboxBlockEntity, extended with a network node. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ArcaneticGearboxBlockEntity>> ARCANETIC_GEARBOX_BE =
             BLOCK_ENTITIES.register("arcanetic_gearbox", () -> BlockEntityType.Builder
-                    .of((pos, state) -> new GearboxBlockEntity(PrRegistry.ARCANETIC_GEARBOX_BE.get(), pos, state),
+                    .of((pos, state) -> new ArcaneticGearboxBlockEntity(PrRegistry.ARCANETIC_GEARBOX_BE.get(), pos, state),
                             ARCANETIC_GEARBOX.get())
                     .build(null));
 
@@ -206,6 +208,7 @@ public final class PrRegistry {
         ITEMS.register(modBus);
         BLOCK_ENTITIES.register(modBus);
         TABS.register(modBus);
+        PrMenus.register(modBus);
     }
 
     /** Convenience for anything that wants the block list without touching the holders. */

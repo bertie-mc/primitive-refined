@@ -1,5 +1,6 @@
 package com.berlord.primitiverefined.content.shaft;
 
+import com.berlord.primitiverefined.PrKinetics;
 import com.berlord.primitiverefined.PrRegistry;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.simpleRelays.AbstractSimpleShaftBlock;
@@ -24,7 +25,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * <p>It exists as a separate block so primitive machines can be wired with a visually
  * distinct line, and so a later version can restrict which shafts carry a network.
  */
-public class SoulstainedShaftBlock extends AbstractSimpleShaftBlock {
+public class SoulstainedShaftBlock extends AbstractSimpleShaftBlock implements PrKinetics.Arcanetic {
 
     private static final VoxelShape X_SHAPE = Block.box(0, 6, 6, 16, 10, 10);
     private static final VoxelShape Y_SHAPE = Block.box(6, 0, 6, 10, 16, 10);

@@ -2,35 +2,79 @@
 
 An early-game, Create-powered precursor to Refined Storage for **NeoForge 1.21.1**.
 
-The machines are one-to-one in behaviour with their Refined Storage counterparts, but they
-run on rotational force: the controller reports the network's total cost as a Create
-**stress impact** instead of drawing FE. Build a waterwheel, not a generator.
+The machines behave one-to-one with their Refined Storage counterparts because they **are**
+Refined Storage: every block here is an RS network node and the grids drive RS's own
+container menus and screens. What is this mod's own is the power and the wiring — the
+network runs on rotational force rather than FE, and **the shafts and cogs that carry that
+force are the cables that carry the network**.
 
-Create is a **required** dependency.
+**Create and Refined Storage are both required dependencies.**
 
-## Planned parts
+## The parts
 
 | Part | Stress | Refined Storage equivalent |
 | --- | --- | --- |
 | Primitive Controller | 0 | Controller |
-| Primitive Cable | 0 | Cable |
+| Arcanetic Shaft / Cog / Gearbox | 0 | Cable |
 | External Reader | 1 | External Storage |
 | Mechanical Grid | 5 | Grid |
 | Mechanical Crafting Grid | 10 | Crafting Grid |
-
-Plus the Arcanetic Shaft and Arcanetic Cog for wiring, and the Arcanetic Gearbox for
-turning a line of shafts a corner — Create parts in this mod's materials, with no storage
-role of their own.
 
 The controller itself is free. You pay for what you hang off it — which is why a bare
 controller spins up on any amount of rotational force, and a network full of crafting
 grids will stall a waterwheel.
 
-## What is in this build
+## How a network works
 
-Four of the five parts exist. **The Primitive Cable does not, so nothing forms a network
-yet** — every block below is a Create machine with the right cost and the right look, and
-none of them store or move a single item. That work starts with the cable.
+**The kinetic network is the storage network.** There is one topology, not two that have to
+be kept in agreement: `KineticConnectionStrategy` answers RS's "which neighbours do you
+connect to" by asking Create's `RotationPropagator.isConnected` which neighbours it is
+already turning. A shaft line that carries rotation carries the network; break the line and
+the network splits in the same tick, because it is the same break.
+
+Consequences worth knowing:
+
+- **A node is active when its block is turning and the kinetic network is not
+  overstressed** — plus exactly one controller on the network. There is no RS energy
+  anywhere in the mod. Overstressed is the brownout: the stress units are not in fact being
+  supplied, so the grids go dark and the storage leaves the network.
+- **Each part charges its own stress where it stands**, on Create's network. The controller
+  charges nothing and reports the sum through the goggles as information only — billing it
+  there as well would charge every grid twice.
+- **Six faces only.** Create also meshes large cogwheels diagonally; the arcanetic family
+  has no large cogwheel, so that case cannot arise inside a network.
+- **A closed family.** A real Refined Storage cable or controller will not join a primitive
+  network and a primitive part will not join an RS one. `canAcceptIncomingConnection`
+  refuses anything that is not ours.
+
+Topology changes that move no speed — a shaft placed against an unpowered line — are
+noticed on the **lazy tick**, so up to half a second late. Anything that moves speed
+arrives through `onSpeedChanged` immediately.
+
+## Arcanetic parts do not mesh with Create's
+
+Two kinetic families, and they refuse each other. `RotationPropagatorMixin` returns a
+rotation speed modifier of **zero** for any cross-family pair, which is both "carries no
+speed" and "not connected" at the one point every caller in the propagator routes through.
+
+A block placed where the two would have met **breaks and drops** — `destroyBlock(pos, true)`,
+the same call Create makes when a cogwheel is asked to turn two ways at once, so the two
+failures look and sound alike. The block that pops is always the one just placed, which is
+why `PrFamilyGuard` hangs off the place event rather than off the propagator: only there is
+it known which of the two is new.
+
+Whether Create *would* have meshed them is asked by suppressing the veto for the length of
+one question and putting it to Create, rather than by reimplementing its meshing rules here.
+
+**The one crossing is the controller's roof.** Family membership is per *face*, not per
+block: the controller's top face belongs to Create, everything else about it is arcanetic.
+That is how rotational force gets into a network at all, and it is the only way it can.
+
+**Not covered:** blocks that appear without a place event — contraption disassembly,
+`/setblock`, worldgen. Those leave a dead join rather than a pop. Nothing drives across it
+either way, so the failure mode is inert rather than wrong.
+
+## The blocks
 
 ### Primitive Controller (`primitive_refined:p_controller`)
 
@@ -45,8 +89,15 @@ side texture is Create's own with 50 pixels replaced; a separate four-quad layer
 just the trace pixels as emissive, because a model that inherits Create's geometry has no
 elements of its own to hang per-face lighting on.
 
-The stress it demands is the sum of the network attached to it, so in this build — with no
-cables or grids to attach — it is zero, and it lights on any rotational force at all.
+Its own stress impact is **zero** and stays zero: every part on the network charges where it
+stands, so a bare controller still lights on any rotational force at all. The goggle readout
+adds the network's total demand and its controller count to the conditions it already
+reported.
+
+**Only one controller to a system**, which is Refined Storage's rule and berlord's. Zero
+means nothing is feeding it; more than one and every node on the network goes inactive
+rather than one of them being picked as the real one, because which one that would be is not
+a question with an answer. The controller says so through the goggles.
 
 ### Arcanetic Shaft (`primitive_refined:soulstained_shaft`)
 
@@ -92,11 +143,21 @@ reach past the block and out through the window in the rims, which is how it mes
 cogwheel laid alongside. The block is an `ICogWheel` for the same reason Create's crafter
 is one.
 
-**Working:** the screen lights and unlights correctly.
+**They open Refined Storage's own grid screens.** Sorting, the search box and its query
+syntax, the view modes, the synchronizers, insert, extract, scroll, shift-click and — on the
+crafting grid — the 3x3 matrix, recipe transfer from EMI or JEI, and crafting straight out
+of the network are all RS's classes, bound to menu types this mod registers.
+`PGridContainerMenu` and `PCraftingGridContainerMenu` are two-constructor shims and nothing
+more; nothing about the grids' front end is reimplemented, so nothing about it can drift
+from RS's.
 
-**Their Refined Storage behaviour is not implemented.** They hold no items, open no GUI and
-join no storage network. RS's own grids need cables too, so this waits on the Primitive
-Cable; the intent is to mirror RS's design rather than invent one.
+A grid opens whether or not the network is running, the way RS's own does — a dark, empty
+grid is a readable answer to "is this thing on", and closing the screen in the player's face
+is not. The screen lights on the same condition the node is active on.
+
+**Autocrafting is not implemented and there is nothing to implement it with:** no pattern
+provider, no autocrafter. The four `PreviewProvider` methods answer "nothing" rather than
+throwing, and no resource is ever shown as autocraftable.
 
 ### External Reader (`primitive_refined:external_reader`)
 
@@ -105,6 +166,16 @@ network's **External Storage**: one per attached inventory, one stress. Horizont
 like the grids — indicator towards you, shaft on the face away — a deliberate narrowing,
 since Create's own switch can also sit on floors and ceilings but the shaft has to arrive
 somewhere and a horizontal line is where this mod puts it.
+
+**It reads the inventory in front of it**, so the block sits in a straight line between the
+two: shaft, reader, chest. Every registered `ExternalStorageProviderFactory` is tried rather
+than only the item-handler one, so a reader picks up anything an RS External Storage would.
+Change detection runs every tick — RS rate-limits its own against an adaptive work rate, but
+a primitive network is small enough to afford it and it is what makes the grid feel live.
+
+**This is the only storage medium in the mod.** No disks, no storage blocks. What a network
+holds is whatever its readers can see, which is the early-game shape of the thing: you are
+wiring up the chests you already have.
 
 Its front is Create's pixels moved, not repainted: the 4x4 hue-rotated red to purple with
 saturation untouched and value lifted, the ring around it scaled down in value alone.
@@ -196,31 +267,85 @@ let the release build, `packwiz update`, sync. It is about six minutes and it st
 
 ### CI
 
-`build.yml` composes the independent `bertie-ci` v3.2.1 build, client world-join, and
-dedicated-server readiness jobs. Both runtime jobs install the shared, hash-pinned
-`create` fixture before loading this mod's built artifact. There are no unit-test or
-GameTest jobs because the repository does not yet contain either kind of test.
+`build.yml` composes the independent `bertie-ci` build, client world-join, and
+dedicated-server readiness jobs. Both runtime jobs install shared, hash-pinned fixtures
+before loading this mod's built artifact. There are no unit-test or GameTest jobs because
+the repository does not yet contain either kind of test.
+
+**The runtime jobs are red until `bertie-ci` gains a `refined-storage` fixture profile.**
+Refined Storage is now a hard dependency, so a probe without it never gets past mod loading;
+`build.yml` asks for `create,refined-storage` and there is no such profile yet. The
+canonical `bertie-pack` already carries `refined-storage.pw.toml`, so the fix is one line in
+`bertie-ci`'s `fixtures/profiles.json` plus a new tag — deliberately left to be made in that
+repo rather than reached into from here. `release.yml` composes only the build job and is
+unaffected.
 
 `release.yml` composes the same build job with the artifact-only GitHub publisher, so a
 release never maintains or runs a second build recipe.
 
-## The one mixin
+## The mixin
 
-`RotationPropagatorMixin` adds the missing large-cogwheel-drives-controller case. Create
+`RotationPropagatorMixin` does two things, in one injection point, in declaration order.
+
+The **second** is the cross-family veto described above. The **first**, and the original
+reason the mixin exists, adds the missing large-cogwheel-drives-controller case. Create
 supports it for its own speed controller via `isLargeCogToSpeedController`, hardcoded to
 `AllBlocks.ROTATION_SPEED_CONTROLLER`, and exposes no hook on the receiving side - the
 propagator only asks the *upstream* block for a custom connection, and upstream here is
 Create's own cogwheel entity.
 
-It injects at the head of the private `getRotationSpeedModifier`, which is the single
+Both inject at the head of the private `getRotationSpeedModifier`, which is the single
 point every caller routes through: `getConveyedSpeed` multiplies the source speed by it,
 and `isConnected` tests it for non-zero.
+
+Mixin runs callbacks at a shared injection point in declaration order and stops at the first
+that cancels, so the sanctioned bridge is decided before the veto ever sees it. It would
+survive either order — the controller's top face is Create's, so that pair is not
+cross-family — but the ordering makes the intent explicit rather than incidental.
 
 **Being private, it is not API.** Re-check this mixin on every Create bump. It is set to
 `defaultRequire: 1`, so if the target moves the mod fails loudly at load rather than
 quietly losing the connection.
 
 ## Known gaps
+
+### The whole storage layer is unverified in game
+
+Everything in "How a network works", "Arcanetic parts do not mesh with Create's" and the
+grid and reader sections above **compiles and has never been run.** No client has been
+launched against it. It is written against Refined Storage 2.0.9's API as read out of the
+jar with `javap`, which gives signatures and bytecode but not intent, so the places to look
+first are the ones where intent mattered:
+
+- **Does a network form at all?** The one load-bearing assumption is that RS resolves a
+  node through the `NetworkNodeContainerProvider` **block capability**
+  (`RefinedStorageNeoForgeApi.INSTANCE.getNetworkNodeContainerProviderCapability()`) rather
+  than through an `instanceof` on its own base class. That is what lets a Create
+  `KineticBlockEntity` be an RS node at all — Java has one superclass to give and Create has
+  it. If nothing connects, this is why.
+- **Do the grid screens open, and do sorting, search and shift-click work?** They are RS's
+  screens under menu types this mod registers, opened with NeoForge's extended screen data
+  and `GridData.STREAM_CODEC`.
+- **Does the crafting grid craft?** `startExtractTransaction`'s boolean was read off RS's
+  bytecode and is **the opposite way round to the obvious guess** — true is direct commit,
+  false is snapshot. If crafting duplicates or eats ingredients, start there.
+- **Does the External Reader see a chest?** And on the face intended — see below.
+- **Does a cross-family placement actually pop?** And, more importantly, does a
+  *same*-family one not: the veto runs inside `getRotationSpeedModifier`, on every
+  propagation in the world, so a false positive would break Create itself.
+- **Two controllers on one network** should darken everything and say so through the
+  goggles.
+
+### The External Reader's inventory face is a coin-flip that was flipped one way
+
+The reader reads the block **in front** of it — the face with the display — because the
+shaft has to be on the back and that puts the three in a line. The consequence is that
+placing one against a chest means placing it while looking *away* from the chest, since
+`getStateForPlacement` puts the front towards the player, as the grids do.
+
+The alternative is to face it away from the player on placement, the way RS's own External
+Storage does, at the cost of the reader no longer being placed like the grids. Not asked
+about, and a one-line change either way.
 
 ### Display names and registry ids have diverged
 
@@ -280,6 +405,12 @@ Two things about it were **never explicitly looked for**, only assumed from thei
 
 ### Elsewhere
 
+- **The ids in `PrCogwheels.NAMES` are one entry long.** Its javadoc still describes six
+  variants, three gear materials by two shaft materials. That was true once.
+- **No security, and no place to put it.** RS wraps its grid operations in
+  `SecuredGridOperations`; this does not, because there is no security card, no security
+  manager and no network owner anywhere in the mod for it to consult. The fuzzy wrapper
+  *is* applied, so shift-clicking a damaged tool still finds the other damaged ones.
 - **With Flywheel's backend off, nothing that turns renders.** That was already true of the
   controller's shaft stubs; it now covers the grids' shaft and cogwheel too, so a grid with
   the backend off has an empty well and an empty gap. A fallback would have to place and
@@ -424,3 +555,7 @@ gearboxes were called good.
 
 Everything else on the External Reader and the gearboxes is previewer work — see
 Known gaps for what to check first.
+
+**Nothing in the storage layer has been verified at all.** It has never been launched. See
+"The whole storage layer is unverified in game" above for the specific things to look at,
+in the order worth looking at them.

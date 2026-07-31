@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.berlord.primitiverefined.PrRegistry;
-import com.simibubi.create.content.kinetics.simpleRelays.BracketedKineticBlockEntity;
+import com.berlord.primitiverefined.network.ArcaneticRelayBlockEntity;
 import com.simibubi.create.content.kinetics.simpleRelays.CogwheelBlockItem;
 
 import net.minecraft.world.item.Item;
@@ -40,7 +40,7 @@ public final class PrCogwheels {
      * against the clicked face, as if it were not a cogwheel at all.
      */
     public static final Map<String, DeferredItem<CogwheelBlockItem>> ITEMS = new LinkedHashMap<>();
-    public static final Map<String, DeferredHolder<BlockEntityType<?>, BlockEntityType<BracketedKineticBlockEntity>>>
+    public static final Map<String, DeferredHolder<BlockEntityType<?>, BlockEntityType<ArcaneticRelayBlockEntity>>>
             BLOCK_ENTITIES = new LinkedHashMap<>();
 
     private static BlockBehaviour.Properties properties(String name) {
@@ -60,7 +60,7 @@ public final class PrCogwheels {
             // resolve lazily, so the mutual reference is fine.
             BLOCK_ENTITIES.put(name, PrRegistry.BLOCK_ENTITIES.register(name,
                     () -> BlockEntityType.Builder
-                            .of((pos, state) -> new BracketedKineticBlockEntity(
+                            .of((pos, state) -> new ArcaneticRelayBlockEntity(
                                             BLOCK_ENTITIES.get(name).get(), pos, state),
                                     BLOCKS.get(name).get())
                             .build(null)));

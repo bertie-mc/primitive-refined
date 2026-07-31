@@ -1,5 +1,6 @@
 package com.berlord.primitiverefined.content.gearbox;
 
+import com.berlord.primitiverefined.PrKinetics;
 import com.berlord.primitiverefined.PrRegistry;
 import com.simibubi.create.content.kinetics.gearbox.GearboxBlock;
 import com.simibubi.create.content.kinetics.gearbox.GearboxBlockEntity;
@@ -19,7 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
  * <p>What is genuinely ours is the look: brass casing where Create has andesite, and a
  * panel whose wood comes from the sequenced gearshift.
  */
-public class ArcaneticGearboxBlock extends GearboxBlock {
+public class ArcaneticGearboxBlock extends GearboxBlock implements PrKinetics.Arcanetic {
 
     public ArcaneticGearboxBlock(Properties properties) {
         super(properties);
