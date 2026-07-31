@@ -9,6 +9,13 @@ displayName="${mod_name}"
 authors="${mod_authors}"
 description='''${mod_description}'''
 
+# One mixin, into Create's RotationPropagator, so a large cogwheel can drive the
+# controller under it. Create hardcodes that case to its own speed controller and exposes
+# no hook on the receiving side. Listed in the common "mixins" array of the json, never a
+# client/server sub-array - those silently never apply on NeoForge.
+[[mixins]]
+config="${mod_id}.mixins.json"
+
 [[dependencies.${mod_id}]]
 modId="neoforge"
 type="required"

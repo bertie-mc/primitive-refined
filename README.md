@@ -91,11 +91,26 @@ Two consequences worth knowing:
   at all, so a tinted shaft is drawn grey the moment it starts spinning. The colour has to
   live in the texture. Whatever replaces this placeholder must be a real texture too.
 
+## The one mixin
+
+`RotationPropagatorMixin` adds the missing large-cogwheel-drives-controller case. Create
+supports it for its own speed controller via `isLargeCogToSpeedController`, hardcoded to
+`AllBlocks.ROTATION_SPEED_CONTROLLER`, and exposes no hook on the receiving side - the
+propagator only asks the *upstream* block for a custom connection, and upstream here is
+Create's own cogwheel entity.
+
+It injects at the head of the private `getRotationSpeedModifier`, which is the single
+point every caller routes through: `getConveyedSpeed` multiplies the source speed by it,
+and `isConnected` tests it for non-zero.
+
+**Being private, it is not API.** Re-check this mixin on every Create bump. It is set to
+`defaultRequire: 1`, so if the target moves the mod fails loudly at load rather than
+quietly losing the connection.
+
 ## Known gaps
 
-- **The controller can drive the cogwheel above it, but not be driven by it.** Create's
-  `RotationPropagator` hardcodes its own block for the large-cog-to-speed-controller case,
-  so the reverse direction would need a hook on Create's cogwheel entity that an addon
-  cannot reach. Power the controller through its shaft line.
+- **The controller's shaft stubs do not rotate.** They are static geometry in the overlay
+  model. Making them turn needs a `SpeedControllerRenderer`-style block entity renderer
+  with a registered `PartialModel`, which is not done yet.
 - **No recipes.** Both blocks are creative-tab only so far.
 - Nothing here has been verified in a running client yet.
