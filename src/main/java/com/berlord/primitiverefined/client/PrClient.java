@@ -2,16 +2,10 @@ package com.berlord.primitiverefined.client;
 
 import com.berlord.primitiverefined.PrRegistry;
 import com.berlord.primitiverefined.PrimitiveRefined;
-import com.simibubi.create.content.kinetics.base.ShaftRenderer;
-import com.simibubi.create.content.kinetics.base.ShaftVisual;
-
-import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 
 @EventBusSubscriber(modid = PrimitiveRefined.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
@@ -36,6 +30,10 @@ public final class PrClient {
     static void registerBlockColors(RegisterColorHandlersEvent.Block event) {
         event.register((state, level, pos, tintIndex) -> SOULSTAINED_TINT,
                 PrRegistry.SOULSTAINED_SHAFT.get());
+        // The controller's own shaft stubs are tinted the same way. Only they carry a
+        // tintindex; the overlay quads have none, so they are unaffected.
+        event.register((state, level, pos, tintIndex) -> tintIndex == 0 ? SOULSTAINED_TINT : 0xFFFFFF,
+                PrRegistry.P_CONTROLLER.get());
     }
 
     @SubscribeEvent
@@ -44,32 +42,21 @@ public final class PrClient {
                 PrRegistry.SOULSTAINED_SHAFT_ITEM.get());
     }
 
-    /**
-     * The fallback path, for when Flywheel's backend is off. Create pairs both of these on
-     * its own shafts, so we do the same.
-     */
-    @SubscribeEvent
-    static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(PrRegistry.SOULSTAINED_SHAFT_BE.get(), ShaftRenderer::new);
-    }
-
-    /**
-     * The reason the shaft was standing still.
-     *
-     * <p>A kinetic block does not spin because it is kinetic - it spins because something
-     * draws it spinning. Create's shaft has a Flywheel visual doing that, and registering
-     * one is also what stops the static blockstate model being drawn on top of the
-     * animated one. Without this the block renders from its chunk mesh and never moves,
-     * no matter how healthy its kinetic network is.
-     *
-     * <p>There is no registration event for this; Flywheel expects the call during client
-     * setup.
-     */
-    @SubscribeEvent
-    static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> SimpleBlockEntityVisualizer
-                .builder(PrRegistry.SOULSTAINED_SHAFT_BE.get())
-                .factory(ShaftVisual::new)
-                .apply());
-    }
+    // No block entity renderer and no Flywheel visual are registered for the shaft, and
+    // that is deliberate. Both of Create's ready-made options draw the wrong thing:
+    //
+    //   ShaftRenderer.getRenderedBlockState() returns Create's OWN shaft state, so it
+    //   drew a grey Create shaft on top of our purple one.
+    //
+    //   ShaftVisual likewise instances Create's shaft partial model.
+    //
+    // Nor does swapping in a renderer that draws our own state help on its own: nothing
+    // in the shaft chain overrides getRenderShape, so the static chunk model is never
+    // suppressed and you get two shafts; and KineticBlockEntityRenderer bakes the model
+    // into a SuperByteBuffer with no tint handling at all, so a tintindex recolour is
+    // dropped and the spinning copy comes out grey regardless.
+    //
+    // The shaft therefore renders from its static model only - right colour, no spin -
+    // until we decide between colouring a custom renderer via SuperByteBuffer.color()
+    // and giving the shaft a real texture instead of a tint.
 }
