@@ -15,8 +15,8 @@ Create is a **required** dependency.
 | Primitive Controller | 0 | Controller |
 | Primitive Cable | 0 | Cable |
 | Primitive External Storage | 1 | External Storage |
-| Primitive Grid | 5 | Grid |
-| Primitive Crafting Grid | 10 | Crafting Grid |
+| Mechanical Grid | 5 | Grid |
+| Mechanical Crafting Grid | 10 | Crafting Grid |
 
 The controller itself is free. You pay for what you hang off it — which is why a bare
 controller spins up on any amount of rotational force, and a network full of crafting
@@ -43,7 +43,7 @@ elements of its own to hang per-face lighting on.
 The stress it demands is the sum of the network attached to it, so in this build — with no
 cables or grids to attach — it is zero, and it lights on any rotational force at all.
 
-### Soulstained Shaft (`primitive_refined:soulstained_shaft`)
+### Arcanetic Shaft (`primitive_refined:soulstained_shaft`)
 
 Create's shaft, in soulstained steel. Same axis placement and alignment, same kinetic
 relay behaviour, same shape; it extends `AbstractSimpleShaftBlock`, the same class Create's
@@ -52,7 +52,7 @@ own `ShaftBlock` extends, rather than reimplementing any of it.
 It exists as a separate block so primitive machines can be wired with a visually distinct
 line, and so a later version can restrict which shafts carry a network.
 
-### Primitive Grid / Primitive Crafting Grid (`p_grid`, `p_crafting_grid`)
+### Mechanical Grid / Mechanical Crafting Grid (`p_grid`, `p_crafting_grid`)
 
 Refined Storage screen on the front, a recessed brass gearbox face on the back, mechanical
 crafter body. Rotation enters along the facing axis, through the shaft standing in the
@@ -145,6 +145,25 @@ and `isConnected` tests it for non-zero.
 quietly losing the connection.
 
 ## Known gaps
+
+### Display names and registry ids have diverged
+
+The blocks were renamed; their ids were not. So:
+
+| Shown in game | Registry id |
+| --- | --- |
+| Mechanical Grid | `p_grid` |
+| Mechanical Crafting Grid | `p_crafting_grid` |
+| Arcanetic Shaft | `soulstained_shaft` |
+| Arcanetic Cog | `obsidiansteel_cogwheel_soulstained` |
+
+Deliberate, for now: renaming an id destroys every placed block of that type in every
+existing world, and berlord is actively testing in one. **The window to fix this closes
+the moment anything references these ids** — a recipe, a quest, a tag, another pack.
+Nothing does yet. Do it before anything does, or accept the ids permanently.
+
+The Primitive Controller and the creative tab still read "Primitive"; only the four blocks
+above were renamed.
 
 ### What the grid body still has not been checked for
 
@@ -250,7 +269,7 @@ material fault when it is neither.
 The grids shipped in `v0.1.0` with exactly this: `gridProperties()` was the one set of
 block properties in the mod without `.noOcclusion()`, and the grids were the only blocks
 whose shaft and cogwheel were black. Every other block here that draws an instance — the
-controller, the Soulstained Shaft, the whole cogwheel family — had always set it.
+controller, the Arcanetic Shaft, the whole cogwheel family — had always set it.
 
 So: **any block with a Flywheel visual needs `.noOcclusion()`.** For these it is right
 anyway; the rims have a see-through window and the back is recessed, so it was never a
@@ -274,7 +293,7 @@ same.
 Confirmed by berlord in the s1 demo instance: the controller renders and lights, its
 goggle readout reports every lit condition, it takes power both through its horizontal
 shaft line and from a large cogwheel above (the mixin), it drives that cogwheel, and the
-Soulstained Shaft relays force and spins.
+Arcanetic Shaft relays force and spins.
 
 Also confirmed: the grids light when powered, and our cogwheels place correctly onto a
 large cogwheel (they did not before - the item must be Create's `CogwheelBlockItem`, whose
