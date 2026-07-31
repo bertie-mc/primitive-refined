@@ -1,19 +1,62 @@
 {
-  "__comment": "Property is 'axis' (BlockStateProperties.HORIZONTAL_AXIS). Model authored for axis=z.",
-  "variants": {
-    "axis=z,lit=false": {
-      "model": "primitive_refined:block/p_controller"
+  "__comment": "Base model always; the emissive layer only when lit. Property is 'axis'.",
+  "multipart": [
+    {
+      "when": {
+        "axis": "z",
+        "lit": "false"
+      },
+      "apply": {
+        "model": "primitive_refined:block/p_controller"
+      }
     },
-    "axis=z,lit=true": {
-      "model": "primitive_refined:block/p_controller_lit"
+    {
+      "when": {
+        "axis": "x",
+        "lit": "false"
+      },
+      "apply": {
+        "model": "primitive_refined:block/p_controller",
+        "y": 90
+      }
     },
-    "axis=x,lit=false": {
-      "model": "primitive_refined:block/p_controller",
-      "y": 90
+    {
+      "when": {
+        "axis": "z",
+        "lit": "true"
+      },
+      "apply": {
+        "model": "primitive_refined:block/p_controller_lit"
+      }
     },
-    "axis=x,lit=true": {
-      "model": "primitive_refined:block/p_controller_lit",
-      "y": 90
+    {
+      "when": {
+        "axis": "x",
+        "lit": "true"
+      },
+      "apply": {
+        "model": "primitive_refined:block/p_controller_lit",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "axis": "z",
+        "lit": "true"
+      },
+      "apply": {
+        "model": "primitive_refined:block/p_controller_glow"
+      }
+    },
+    {
+      "when": {
+        "axis": "x",
+        "lit": "true"
+      },
+      "apply": {
+        "model": "primitive_refined:block/p_controller_glow",
+        "y": 90
+      }
     }
-  }
+  ]
 }

@@ -35,9 +35,10 @@ matter how fast the shaft line under it is turning. The cogwheel must be horizon
 perpendicular to the controller's own axis, the same three conditions Create checks for
 its own speed controller.
 
-When it is running, the Refined Storage trace pattern on its sides animates. The texture is
-Create's own with 50 pixels replaced, not an overlay - so the pattern no longer glows in the
-dark; it is lit like the rest of the block.
+When it is running, the Refined Storage trace pattern on its sides animates and glows. The
+side texture is Create's own with 50 pixels replaced; a separate four-quad layer carries
+just the trace pixels as emissive, because a model that inherits Create's geometry has no
+elements of its own to hang per-face lighting on.
 
 The stress it demands is the sum of the network attached to it, so in this build — with no
 cables or grids to attach — it is zero, and it lights on any rotational force at all.

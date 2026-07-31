@@ -6,8 +6,9 @@ import java.util.Map;
 
 import com.berlord.primitiverefined.PrRegistry;
 import com.simibubi.create.content.kinetics.simpleRelays.BracketedKineticBlockEntity;
+import com.simibubi.create.content.kinetics.simpleRelays.CogwheelBlockItem;
 
-import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -32,7 +33,13 @@ public final class PrCogwheels {
     public static final List<String> NAMES = List.of("obsidiansteel_cogwheel_soulstained");
 
     public static final Map<String, DeferredBlock<PrCogWheelBlock>> BLOCKS = new LinkedHashMap<>();
-    public static final Map<String, DeferredItem<BlockItem>> ITEMS = new LinkedHashMap<>();
+    /**
+     * Deliberately {@link CogwheelBlockItem}, not a plain {@code BlockItem}. Its
+     * {@code onItemUseFirst} is what places a cogwheel meshed against another one; with a
+     * plain block item the ghost preview still showed but the block was placed flat
+     * against the clicked face, as if it were not a cogwheel at all.
+     */
+    public static final Map<String, DeferredItem<CogwheelBlockItem>> ITEMS = new LinkedHashMap<>();
     public static final Map<String, DeferredHolder<BlockEntityType<?>, BlockEntityType<BracketedKineticBlockEntity>>>
             BLOCK_ENTITIES = new LinkedHashMap<>();
 
@@ -62,7 +69,8 @@ public final class PrCogwheels {
                     () -> new PrCogWheelBlock(properties(name),
                             () -> BLOCK_ENTITIES.get(name).get())));
 
-            ITEMS.put(name, PrRegistry.ITEMS.registerSimpleBlockItem(name, BLOCKS.get(name)));
+            ITEMS.put(name, PrRegistry.ITEMS.register(name,
+                    () -> new CogwheelBlockItem(BLOCKS.get(name).get(), new Item.Properties())));
         }
     }
 

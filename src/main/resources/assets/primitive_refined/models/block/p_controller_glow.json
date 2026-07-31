@@ -1,0 +1,122 @@
+{
+  "__comment": "Emissive layer only. The merged side texture cannot carry emissivity - per-face neoforge_data needs elements, and the base model inherits Create's geometry so it has none of its own. This is the smallest thing that restores the glow: four quads a hair proud of Create's inset band, carrying just the trace pixels. Same uv rects the band itself uses, so alignment is exact.",
+  "render_type": "cutout",
+  "textures": {
+    "glow": "primitive_refined:block/p_controller_glow",
+    "particle": "create:block/rotation_speed_controller"
+  },
+  "elements": [
+    {
+      "name": "glow_north",
+      "from": [
+        1,
+        4,
+        0.99
+      ],
+      "to": [
+        15,
+        12,
+        0.99
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            0,
+            15,
+            8
+          ],
+          "texture": "#glow",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15
+          }
+        }
+      }
+    },
+    {
+      "name": "glow_south",
+      "from": [
+        1,
+        4,
+        15.01
+      ],
+      "to": [
+        15,
+        12,
+        15.01
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            1,
+            0,
+            15,
+            8
+          ],
+          "texture": "#glow",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15
+          }
+        }
+      }
+    },
+    {
+      "name": "glow_west",
+      "from": [
+        0.99,
+        4,
+        1
+      ],
+      "to": [
+        0.99,
+        12,
+        15
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            1,
+            8,
+            15,
+            16
+          ],
+          "texture": "#glow",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15
+          }
+        }
+      }
+    },
+    {
+      "name": "glow_east",
+      "from": [
+        15.01,
+        4,
+        1
+      ],
+      "to": [
+        15.01,
+        12,
+        15
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            1,
+            8,
+            15,
+            16
+          ],
+          "texture": "#glow",
+          "neoforge_data": {
+            "block_light": 15,
+            "sky_light": 15
+          }
+        }
+      }
+    }
+  ]
+}
