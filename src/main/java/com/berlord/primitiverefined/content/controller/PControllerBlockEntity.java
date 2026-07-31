@@ -5,10 +5,14 @@ import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
 
+import java.util.List;
+
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -30,6 +34,12 @@ public class PControllerBlockEntity extends KineticBlockEntity {
     public float calculateStressApplied() {
         this.lastStressApplied = demand;
         return demand;
+    }
+
+    @Override
+    public void initialize() {
+        super.initialize();
+        refresh();
     }
 
     @Override
@@ -120,6 +130,56 @@ public class PControllerBlockEntity extends KineticBlockEntity {
         Direction.Axis cogAxis = ((IRotate) cogState.getBlock()).getRotationAxis(cogState);
         return !cogAxis.isVertical()
                 && cogAxis != controllerState.getValue(PControllerBlock.HORIZONTAL_AXIS);
+    }
+
+    /**
+     * Reports every condition the lit state depends on, through the goggles.
+     *
+     * <p>"It does not glow" has three possible causes and they are indistinguishable from
+     * the outside, so the block states them itself rather than us guessing at them one
+     * build at a time.
+     */
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        super.addToGoggleTooltip(tooltip, isPlayerSneaking);
+        if (level == null) {
+            return true;
+        }
+
+        BlockState state = getBlockState();
+        BlockState above = level.getBlockState(worldPosition.above());
+        boolean isController = state.getBlock() instanceof PControllerBlock;
+        boolean cogOk = isController && PControllerBlock.hasValidCogwheelAbove(level, worldPosition, state);
+
+        tooltip.add(Component.literal(" ").append(
+                Component.literal("Primitive Controller").withStyle(ChatFormatting.GRAY)));
+        line(tooltip, "cogwheel above", cogOk,
+                above.isAir() ? "nothing there"
+                        : above.getBlock().getName().getString()
+                          + (above.hasProperty(com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock.AXIS)
+                             ? " axis=" + above.getValue(
+                                     com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock.AXIS)
+                             : ""));
+        if (isController) {
+            line(tooltip, "controller axis", true,
+                    state.getValue(PControllerBlock.HORIZONTAL_AXIS).toString());
+        }
+        line(tooltip, "speed", getSpeed() != 0, String.format("%.1f rpm", getSpeed()));
+        line(tooltip, "not overstressed", !isOverStressed(), isOverStressed() ? "overstressed" : "ok");
+        line(tooltip, "network demand", true, String.format("%.1f su", demand));
+        if (isController) {
+            line(tooltip, "lit", state.getValue(PControllerBlock.LIT),
+                    state.getValue(PControllerBlock.LIT) ? "on" : "off");
+        }
+        return true;
+    }
+
+    private static void line(List<Component> tooltip, String label, boolean ok, String detail) {
+        tooltip.add(Component.literal("    ")
+                .append(Component.literal(ok ? "✔ " : "✘ ")
+                        .withStyle(ok ? ChatFormatting.GREEN : ChatFormatting.RED))
+                .append(Component.literal(label + ": ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(detail).withStyle(ChatFormatting.WHITE)));
     }
 
     @Override
