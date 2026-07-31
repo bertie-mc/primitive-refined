@@ -3,6 +3,8 @@ package com.berlord.primitiverefined;
 import com.berlord.primitiverefined.content.cogwheel.PrCogwheels;
 import com.berlord.primitiverefined.content.controller.PControllerBlock;
 import com.berlord.primitiverefined.content.controller.PControllerBlockEntity;
+import com.berlord.primitiverefined.content.grid.PGridBlock;
+import com.berlord.primitiverefined.content.grid.PGridBlockEntity;
 import com.berlord.primitiverefined.content.shaft.SoulstainedShaftBlock;
 import com.simibubi.create.content.kinetics.simpleRelays.BracketedKineticBlockEntity;
 
@@ -54,6 +56,19 @@ public final class PrRegistry {
                     .strength(0.5F)
                     .noOcclusion()));
 
+    public static final DeferredBlock<PGridBlock> P_GRID = BLOCKS.register("p_grid",
+            () -> new PGridBlock(gridProperties(), PrStress.GRID, () -> PrRegistry.P_GRID_BE.get()));
+
+    public static final DeferredBlock<PGridBlock> P_CRAFTING_GRID = BLOCKS.register("p_crafting_grid",
+            () -> new PGridBlock(gridProperties(), PrStress.CRAFTING_GRID, () -> PrRegistry.P_CRAFTING_GRID_BE.get()));
+
+    private static BlockBehaviour.Properties gridProperties() {
+        return BlockBehaviour.Properties.of()
+                .mapColor(MapColor.TERRACOTTA_YELLOW)
+                .sound(SoundType.METAL)
+                .strength(2.0F);
+    }
+
     // --- Items ------------------------------------------------------------------
 
     public static final DeferredItem<BlockItem> P_CONTROLLER_ITEM =
@@ -61,6 +76,12 @@ public final class PrRegistry {
 
     public static final DeferredItem<BlockItem> SOULSTAINED_SHAFT_ITEM =
             ITEMS.registerSimpleBlockItem("soulstained_shaft", SOULSTAINED_SHAFT);
+
+    public static final DeferredItem<BlockItem> P_GRID_ITEM =
+            ITEMS.registerSimpleBlockItem("p_grid", P_GRID);
+
+    public static final DeferredItem<BlockItem> P_CRAFTING_GRID_ITEM =
+            ITEMS.registerSimpleBlockItem("p_crafting_grid", P_CRAFTING_GRID);
 
     // --- Block entities ---------------------------------------------------------
 
@@ -82,6 +103,17 @@ public final class PrRegistry {
                             SOULSTAINED_SHAFT.get())
                     .build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PGridBlockEntity>> P_GRID_BE =
+            BLOCK_ENTITIES.register("p_grid", () -> BlockEntityType.Builder
+                    .of((pos, state) -> new PGridBlockEntity(PrRegistry.P_GRID_BE.get(), pos, state), P_GRID.get())
+                    .build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PGridBlockEntity>> P_CRAFTING_GRID_BE =
+            BLOCK_ENTITIES.register("p_crafting_grid", () -> BlockEntityType.Builder
+                    .of((pos, state) -> new PGridBlockEntity(PrRegistry.P_CRAFTING_GRID_BE.get(), pos, state),
+                            P_CRAFTING_GRID.get())
+                    .build(null));
+
     // --- Creative tab -----------------------------------------------------------
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = TABS.register("main",
@@ -91,6 +123,8 @@ public final class PrRegistry {
                     .displayItems((params, output) -> {
                         output.accept(P_CONTROLLER_ITEM.get());
                         output.accept(SOULSTAINED_SHAFT_ITEM.get());
+                        output.accept(P_GRID_ITEM.get());
+                        output.accept(P_CRAFTING_GRID_ITEM.get());
                         PrCogwheels.ITEMS.values().forEach(i -> output.accept(i.get()));
                     })
                     .build());

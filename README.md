@@ -24,7 +24,8 @@ grids will stall a waterwheel.
 
 ## What is in this build
 
-This is the **demo**: two of the five parts.
+Four of the five parts exist. The Primitive Cable does not, so nothing forms a
+network yet.
 
 ### Primitive Controller (`primitive_refined:p_controller`)
 
@@ -87,6 +88,20 @@ and `isConnected` tests it for non-zero.
 **Being private, it is not API.** Re-check this mixin on every Create bump. It is set to
 `defaultRequire: 1`, so if the target moves the mod fails loudly at load rather than
 quietly losing the connection.
+
+### Primitive Grid / Primitive Crafting Grid (`p_grid`, `p_crafting_grid`)
+
+A mechanical crafter body: Refined Storage screen on the front, the sequenced gearshift's
+shaft face on the back, crafter sides elsewhere. Rotation enters along the facing axis
+through that rear shaft, and the screen lights once the block is turning and the network
+is not overstressed — an overstressed network means the stress units are not actually
+being supplied, which is the unpowered case.
+
+They demand 5 and 10 stress respectively.
+
+**Their Refined Storage behaviour is not implemented.** They are kinetic blocks with the
+right cost, appearance and lit state; they hold no items, open no GUI and join no storage
+network. That work needs the Primitive Cable to exist first.
 
 ## Known gaps
 

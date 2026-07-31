@@ -1,0 +1,35 @@
+{
+  "__comment": "Property is 'facing' (BlockStateProperties.HORIZONTAL_FACING), not 'horizontal_facing'.",
+  "variants": {
+    "facing=north,lit=false": {
+      "model": "primitive_refined:block/p_grid"
+    },
+    "facing=north,lit=true": {
+      "model": "primitive_refined:block/p_grid_lit"
+    },
+    "facing=east,lit=false": {
+      "model": "primitive_refined:block/p_grid",
+      "y": 90
+    },
+    "facing=east,lit=true": {
+      "model": "primitive_refined:block/p_grid_lit",
+      "y": 90
+    },
+    "facing=south,lit=false": {
+      "model": "primitive_refined:block/p_grid",
+      "y": 180
+    },
+    "facing=south,lit=true": {
+      "model": "primitive_refined:block/p_grid_lit",
+      "y": 180
+    },
+    "facing=west,lit=false": {
+      "model": "primitive_refined:block/p_grid",
+      "y": 270
+    },
+    "facing=west,lit=true": {
+      "model": "primitive_refined:block/p_grid_lit",
+      "y": 270
+    }
+  }
+}
