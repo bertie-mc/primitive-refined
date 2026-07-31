@@ -272,13 +272,10 @@ dedicated-server readiness jobs. Both runtime jobs install shared, hash-pinned f
 before loading this mod's built artifact. There are no unit-test or GameTest jobs because
 the repository does not yet contain either kind of test.
 
-**The runtime jobs are red until `bertie-ci` gains a `refined-storage` fixture profile.**
-Refined Storage is now a hard dependency, so a probe without it never gets past mod loading;
-`build.yml` asks for `create,refined-storage` and there is no such profile yet. The
-canonical `bertie-pack` already carries `refined-storage.pw.toml`, so the fix is one line in
-`bertie-ci`'s `fixtures/profiles.json` plus a new tag — deliberately left to be made in that
-repo rather than reached into from here. `release.yml` composes only the build job and is
-unaffected.
+Refined Storage is a hard dependency, so both runtime jobs select the shared
+`create,refined-storage` fixture. The `refined-storage` profile was added centrally in
+`bertie-ci` v3.4.1 from the hash-pinned canonical pack; the client world-join and dedicated
+server probes both pass with that dependency set.
 
 `release.yml` composes the same build job with the artifact-only GitHub publisher, so a
 release never maintains or runs a second build recipe.
