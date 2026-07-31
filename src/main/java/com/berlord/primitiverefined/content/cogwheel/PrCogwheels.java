@@ -29,10 +29,7 @@ public final class PrCogwheels {
     }
 
     /** Registration ids, which are also the model and texture names. */
-    public static final List<String> NAMES = List.of(
-            "cogwheel", "cogwheel_soulstained",
-            "obsidiansteel_cogwheel", "obsidiansteel_cogwheel_soulstained",
-            "rose_gold_cogwheel", "rose_gold_cogwheel_soulstained");
+    public static final List<String> NAMES = List.of("obsidiansteel_cogwheel_soulstained");
 
     public static final Map<String, DeferredBlock<PrCogWheelBlock>> BLOCKS = new LinkedHashMap<>();
     public static final Map<String, DeferredItem<BlockItem>> ITEMS = new LinkedHashMap<>();
