@@ -228,6 +228,27 @@ What it will not tell you: anything drawn by a block entity renderer or a Flywhe
 which for the grids is the shaft and the cogwheel. To look at those, render
 `block/p_grid_kinetics.json` on its own, or merge its elements into the body by hand.
 
+## The texture_size trap — uvs are always /16
+
+**`texture_size` does nothing.** The string does not appear anywhere in NeoForge or in
+Minecraft — grep the jars. It is a Blockbench authoring note, written into the file and
+then ignored by the game. Every uv is normalised by **16**, whatever the texture's real
+resolution: a 32x32 sprite is still addressed `0..16`.
+
+So Create's cogwheel uvs, which look like they are in a 32-wide space because
+`cogwheel.json` declares `"texture_size": [32, 32]` next to them, are not. They are
+ordinary uvs and must be copied **verbatim**. Rescaling them to "match" the atlas breaks
+them.
+
+This cost a round. The grid's cogwheel kept Create's uvs and was right; the shaft's were
+doubled to suit the declared 32, which ran them to 1.25 of the sprite — off the edge, into
+the atlas — and the shaft rendered **black**. Two parts of one model, one correct and one
+not, which is what made it look like a lighting fault a second time.
+
+`tools/preview.py` deliberately does not honour `texture_size` either, for the same
+reason. An earlier version did, and so disagreed with the game on exactly the models that
+declare one.
+
 ## The occlusion trap — why instanced parts render black
 
 A Flywheel instance is lit from the light value at the **block's own position**. A block

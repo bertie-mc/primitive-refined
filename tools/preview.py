@@ -6,7 +6,6 @@ implements them the way FaceBakery does:
 
   * per-face `uv` with `rotation` (90/180/270)  - the old previewer ignored rotation, which
     is exactly the thing Create's crafter uses to fit a 16x6 uv region onto a 6x16 face
-  * `texture_size` - the cogwheel atlas is 32x32
   * element `rotation` {angle, axis, origin, rescale}
   * per-face `tintindex` is ignored; `cullface` is ignored (nothing neighbours the block)
 
@@ -244,11 +243,13 @@ def render_view(model, view, tint, scale, supersample):
             if not isinstance(ref, str) or ref.startswith("#"):
                 continue
             tex = load_tex(ref, tint)
-            tsz = model.get("texture_size", [16, 16])
-            uv = fdef.get("uv", [0, 0, 16, 16])
-            uv = [uv[0] * 16 / tsz[0], uv[1] * 16 / tsz[1],
-                  uv[2] * 16 / tsz[0], uv[3] * 16 / tsz[1]]
-            uvs = face_uvs(uv, fdef.get("rotation", 0))
+            # `texture_size` is deliberately NOT honoured, because the game does not
+            # honour it either: the string does not appear anywhere in NeoForge or in
+            # Minecraft. It is a Blockbench authoring note. Every uv is normalised by 16
+            # whatever the texture's real resolution - a 32x32 sprite is still addressed
+            # 0..16. An earlier version of this file scaled by texture_size, which made
+            # it disagree with the game on exactly the models that declare one.
+            uvs = face_uvs(fdef.get("uv", [0, 0, 16, 16]), fdef.get("rotation", 0))
             pts3 = [rotate_point(p, rot) for p in face_corners(fname, x1, y1, z1, x2, y2, z2)]
             pts2 = [(ox + a, oy + b) for a, b in (project(p, s, flip) for p in pts3)]
             # depth along the view direction, for the z-buffer

@@ -1,10 +1,6 @@
 {
-  "__comment": "The parts of the grid that turn: the rear shaft standing in the gearbox well, and the cogwheel in the gap. Drawn by the block entity's Flywheel visual, not by the chunk mesh - a visual does not suppress the block model, so anything here must be absent from block/p_grid or it renders twice, once spinning and once still. Authored pointing south (+Z), because OrientedRotatingVisual.backHorizontal turns SOUTH onto the block's facing.getOpposite(), which is the face the shaft is on. The cogwheel is Create's cogwheel_shaftless stood on the Z axis, teeth and all: they reach past the block, out through the window in the rims, which is how it meshes with a neighbouring cogwheel the way Create's own crafter does. texture_size is 32 because the cogwheel atlas is 32x32, so the axis uvs are doubled to match.",
+  "__comment": "The parts of the grid that turn: the rear shaft standing in the gearbox well, and the cogwheel in the gap. Drawn by the block entity's Flywheel visual, not by the chunk mesh - a visual does not suppress the block model, so anything here must be absent from block/p_grid or it renders twice, once spinning and once still. Authored pointing south (+Z), because OrientedRotatingVisual.backHorizontal turns SOUTH onto the block's facing.getOpposite(), which is the face the shaft is on. The cogwheel is Create's cogwheel_shaftless stood on the Z axis, teeth and all: they reach past the block, out through the window in the rims, which is how it meshes with a neighbouring cogwheel the way Create's own crafter does. No texture_size, and no uv rescaled to suit one: the string 'texture_size' does not appear anywhere in NeoForge or Minecraft, so it is a Blockbench authoring note the game ignores. Every uv here is normalised by 16 whatever the texture's real resolution. Doubling the axis uvs to 'match' a 32x32 atlas ran them past the edge of the sprite and the shaft rendered black.",
   "parent": "block/block",
-  "texture_size": [
-    32,
-    32
-  ],
   "textures": {
     "cog": "primitive_refined:block/obsidiansteel_cogwheel",
     "side": "primitive_refined:block/soulstained_axis",
@@ -27,59 +23,59 @@
       "faces": {
         "north": {
           "uv": [
-            12,
-            12,
-            20,
-            20
+            6,
+            6,
+            10,
+            10
           ],
           "texture": "#end",
           "rotation": 180
         },
         "south": {
           "uv": [
-            12,
-            12,
-            20,
-            20
+            6,
+            6,
+            10,
+            10
           ],
           "texture": "#end"
         },
         "east": {
           "uv": [
-            12,
+            6,
             0,
-            20,
-            8
+            10,
+            4
           ],
           "texture": "#side",
           "rotation": 270
         },
         "west": {
           "uv": [
-            12,
+            6,
             0,
-            20,
-            8
+            10,
+            4
           ],
           "texture": "#side",
           "rotation": 90
         },
         "up": {
           "uv": [
-            12,
+            6,
             0,
-            20,
-            8
+            10,
+            4
           ],
           "texture": "#side",
           "rotation": 180
         },
         "down": {
           "uv": [
-            12,
+            6,
             0,
-            20,
-            8
+            10,
+            4
           ],
           "texture": "#side"
         }
