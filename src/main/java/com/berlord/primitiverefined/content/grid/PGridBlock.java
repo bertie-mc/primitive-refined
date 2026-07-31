@@ -3,6 +3,7 @@ package com.berlord.primitiverefined.content.grid;
 import java.util.function.Supplier;
 
 import com.simibubi.create.content.kinetics.base.HorizontalKineticBlock;
+import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
 import com.simibubi.create.foundation.block.IBE;
 
 import net.minecraft.core.BlockPos;
@@ -26,8 +27,13 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
  *
  * <p>One class serves both; they differ only in stress and in which textures their models
  * name.
+ *
+ * <p>It is an {@link ICogWheel}, for the same reason Create's own mechanical crafter is
+ * one: there is a cogwheel turning in the gap across its middle, its teeth reach out
+ * through the window in the rims, and a cogwheel laid alongside is expected to mesh with
+ * it. Small cog, not large, and not a dedicated cogwheel - those defaults are right.
  */
-public class PGridBlock extends HorizontalKineticBlock implements IBE<PGridBlockEntity> {
+public class PGridBlock extends HorizontalKineticBlock implements IBE<PGridBlockEntity>, ICogWheel {
 
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
@@ -64,6 +70,11 @@ public class PGridBlock extends HorizontalKineticBlock implements IBE<PGridBlock
         return state.getValue(HORIZONTAL_FACING).getAxis();
     }
 
+    /**
+     * Only the back. That is the one face with a shaft standing in its well; the sides
+     * carry the cogwheel's teeth instead, and meshing there is {@link ICogWheel}'s job,
+     * not this method's.
+     */
     @Override
     public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {
         return face == state.getValue(HORIZONTAL_FACING).getOpposite();

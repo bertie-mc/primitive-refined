@@ -7,6 +7,7 @@ import com.berlord.primitiverefined.PrRegistry;
 import com.berlord.primitiverefined.content.cogwheel.PrCogwheels;
 import com.berlord.primitiverefined.PrimitiveRefined;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
+import com.simibubi.create.content.kinetics.base.OrientedRotatingVisual;
 import com.simibubi.create.content.kinetics.base.SingleAxisRotatingVisual;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
@@ -45,6 +46,10 @@ public final class PrClient {
     private static final PartialModel CONTROLLER_SHAFT_STUBS =
             PartialModel.of(PrimitiveRefined.id("block/p_controller_shaft_stubs"));
 
+    /** The grid's rear shaft and the cogwheel in its gap - one partial, one rotation. */
+    private static final PartialModel GRID_KINETICS =
+            PartialModel.of(PrimitiveRefined.id("block/p_grid_kinetics"));
+
     /**
      * The Flywheel visual - the path that actually runs in normal play.
      *
@@ -80,6 +85,22 @@ public final class PrClient {
                         .factory(SingleAxisRotatingVisual.of(COGWHEEL_MODELS.get(name)))
                         .apply();
             }
+
+            // The grids. Not SingleAxisRotatingVisual: that one turns the model onto the
+            // rotation *axis*, and an axis has no sign, so a model with a shaft at only
+            // one end lands on the wrong end for half the four facings. The controller's
+            // stubs get away with it by being symmetric. OrientedRotatingVisual's
+            // backHorizontal turns SOUTH onto HORIZONTAL_FACING.getOpposite() instead,
+            // which is a direction, and is the face our shaft is on. It is what Create
+            // drives its own mechanical crafter with.
+            SimpleBlockEntityVisualizer
+                    .builder(PrRegistry.P_GRID_BE.get())
+                    .factory(OrientedRotatingVisual.backHorizontal(GRID_KINETICS))
+                    .apply();
+            SimpleBlockEntityVisualizer
+                    .builder(PrRegistry.P_CRAFTING_GRID_BE.get())
+                    .factory(OrientedRotatingVisual.backHorizontal(GRID_KINETICS))
+                    .apply();
         });
     }
 

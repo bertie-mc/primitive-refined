@@ -54,15 +54,33 @@ line, and so a later version can restrict which shafts carry a network.
 
 ### Primitive Grid / Primitive Crafting Grid (`p_grid`, `p_crafting_grid`)
 
-Refined Storage screen on the front, the sequenced gearshift's shaft face on the back,
-mechanical crafter body. Rotation enters along the facing axis through the rear shaft, and
-the screen lights once the block is turning and the network is not overstressed - an
-overstressed network means the stress units are not actually being supplied, which is the
-unpowered case. They demand 5 and 10 stress.
+Refined Storage screen on the front, a recessed brass gearbox face on the back, mechanical
+crafter body. Rotation enters along the facing axis, through the shaft standing in the
+gearbox well, and the screen lights once the block is turning and the network is not
+overstressed - an overstressed network means the stress units are not actually being
+supplied, which is the unpowered case. They demand 5 and 10 stress.
+
+The body follows Create's mechanical crafter element for element: two slabs with a gap at
+z 6-10 and four thin rims. Every `crafter_side` face carries **Create's own face
+`rotation`** — without it a 16x6 uv region lands transposed on a 6x16 face and every side
+of the block stretches. The back is the gearbox face at three depths: the two-pixel
+perimeter at the block surface, the plate one pixel in, the cogwheel well three in. Each
+step is a picture frame of four bars — full-width top and bottom, inset sides — because
+that is the arrangement in which no two faces are ever coplanar, and coplanar is what
+z-fights.
+
+The shaft and the cogwheel turn, so they are **not in the block model at all**. They live
+in `block/p_grid_kinetics` and are drawn by the block entity's Flywheel visual. A visual
+does not suppress the block model, so anything drawn by both renders twice — once
+spinning, once standing still. The item model has to bake them back in, which is exactly
+what Create's own crafter item model does.
+
+The cogwheel is Create's `cogwheel_shaftless` stood on the Z axis, at full size: its teeth
+reach past the block and out through the window in the rims, which is how it meshes with a
+cogwheel laid alongside. The block is an `ICogWheel` for the same reason Create's crafter
+is one.
 
 **Working:** the screen lights and unlights correctly.
-
-**The body is not finished.** See Known gaps - six separate faults, all in the model.
 
 **Their Refined Storage behaviour is not implemented.** They hold no items, open no GUI and
 join no storage network. RS's own grids need cables too, so this waits on the Primitive
@@ -81,7 +99,11 @@ texture's lengthwise grooves are what make a spinning shaft read as spinning.
 ## Deployment status — the packs do not have this mod
 
 `primitive_refined-0.1.0.jar` was copied by hand into the **s1 demo** Prism instance
-(`instances/s1 demo/.minecraft/mods/`) for testing. That is the only place it exists.
+(`instances/s1 demo/.minecraft/mods/`) for testing. That is the only place it exists — and
+that copy is **stale**: it is the build with the old grid body, from before the rebuild
+described above. Nothing has been copied over it, deliberately.
+
+**This repository also has no git remote.** Nothing here has ever been pushed anywhere.
 
 It is **not** in `packs/s1-pack`, `packs/bertie-pack`, `packs/full-test-pack` or
 `packs/worldgen-pack`, and it cannot be until there is a GitHub Release to point
@@ -110,55 +132,72 @@ quietly losing the connection.
 
 ## Known gaps
 
-### The grid body - six faults, confirmed in game
+### The rebuilt grid body has not been seen in game
 
-Listed with the diagnosis, so the next attempt does not rediscover them.
+The six faults the previous round left in the grid body are all addressed, but the rebuild
+was done against the previewer, not the game. berlord's in-game session predates it. So
+everything in the grid section above — the recessed back, the shaft standing in its well,
+the cogwheel turning in the gap, cogwheels meshing against the sides — is **unverified**.
 
-1. **The cog in the gap is a splatter of random lines.** `obsidiansteel_cogwheel.png` is
-   32x32 and is Create's cogwheel *atlas* - teeth strips laid out for the cogwheel model's
-   own uvs, not a tileable surface. Mapping `uv [1,1,15,15]` of it onto a plain box is
-   meaningless. A cog there needs Create's cogwheel geometry, not its texture on a cube.
-2. **Side faces are stretched.** The slab side faces are 6 wide (z) by 16 tall (y), but
-   carry `uv [0,0,16,6]` - 16 by 6. The region is transposed relative to the face. Those
-   uvs were transcribed from Create's element list without allowing for the fact that our
-   element set differs.
-3. **The back is a flat projection of the gearshift face.** The real thing has depth: two
-   rings of perimeter, the cog part as the furthest pixels, everything else one deep. It
-   needs recessed geometry, not a texture on a flat face.
-4. **The rear shaft sticks out** - a consequence of 3. With no recess, the
-   `[6,6,16]->[10,10,17]` stub protrudes instead of sitting in the well.
-5. **The rear shaft does not rotate.** No Flywheel visual or block entity renderer is
-   registered for `P_GRID_BE`. Needs the same treatment the Soulstained Shaft got: a
-   `PartialModel` plus `SingleAxisRotatingVisual`.
-6. **Cogwheels cannot attach.** `PGridBlock.hasShaftTowards` returns true only for the back
-   face and the block is not an `ICogWheel`, so nothing meshes against its sides.
+What *has* been checked, short of launching: the mod builds; no two faces in the block
+model are coplanar and overlapping (the z-fighting case, checked by script); and the
+previewer that produced it renders Create's own `mechanical_crafter` correctly, which is
+the model that exercises uv rotation on all six faces.
+
+The one to look at hardest is the visual. `SingleAxisRotatingVisual` — what the controller
+and the shaft use — turns the model onto the rotation *axis*, and an axis has no sign, so
+a model with a shaft at one end only lands on the wrong end for two of the four facings.
+The controller's stubs get away with it by being symmetric. The grids use
+`OrientedRotatingVisual.backHorizontal` instead, which turns SOUTH onto
+`HORIZONTAL_FACING.getOpposite()` — a direction, not an axis — and is what Create drives
+its own mechanical crafter with. That reasoning is from the bytecode, not from play.
+
+### Elsewhere
+
+- **With Flywheel's backend off, nothing that turns renders.** That was already true of the
+  controller's shaft stubs; it now covers the grids' shaft and cogwheel too, so a grid with
+  the backend off has an empty well and an empty gap. A fallback would have to place and
+  orient the parts by hand through `CachedBuffers.partial`, the way Create's
+  `MechanicalCrafterRenderer` does — a real path, deliberately not taken here because it
+  cannot be tested from the previewer and would have shipped unverified either way.
+- **No recipes.** Everything is creative-tab only.
 
 Possibly not a fault: **shafts placed on the ground look slightly rotated.** Create applies
 a per-position rotation offset (`getRotationAngleOffset`) so neighbouring shafts look
 continuous, and `SingleAxisRotatingVisual` honours it. Create's own shafts do the same.
 Compare ours against a Create shaft at rest before changing anything.
 
-### Elsewhere
-
-- **With Flywheel's backend off, the controller's shaft stubs do not render at all.** They
-  are drawn only by a Flywheel visual; unlike the shaft, no block entity renderer fallback
-  is registered for them, because a fallback would have to place and orient the stubs by
-  hand through `CachedBuffers.partial` and that path is untested.
-- **No recipes.** Everything is creative-tab only.
-
 ## Previewing models without launching the game
 
-Two rounds of grid work shipped blind because the local previewer could not resolve
-Create's textures - assets had been extracted file-by-file, so whatever had not been needed
-before was missing. Do not do that. **Extract each mod's assets whole, once**, from the
-jars pinned in this pack, and render against that.
+`tools/preview.py` is a small isometric renderer for these block models. It is in the repo
+now, because it had been written from scratch twice by the time it was worth keeping.
 
-`unzip` with a wildcard is unreliable here; on MSYS it extracted directory entries and no
-files even with `MSYS2_ARG_CONV_EXCL` set. Python's `zipfile` works.
+```bash
+python tools/extract_assets.py path/to/create.jar
+python tools/preview.py src/main/resources/assets/primitive_refined/models/block/p_grid.json out.png
+```
 
-A crude isometric previewer - axis-aligned boxes with per-face uvs, which is all these
-models use - is enough to catch stretched faces, wrong uv regions and see-through geometry.
-It reproduced all of the grid faults above without a game launch.
+Needs `pillow` and `numpy`. It draws two views, from opposite corners, so the front and
+back of a block can be checked at once, and it implements the parts of the model format
+these models actually use — per-face `uv` with `rotation`, `texture_size`, element
+`rotation`, and alpha — the way `FaceBakery` does.
+
+**Face `rotation` is the one that matters.** The previous previewer ignored it and so was
+blind to the exact fault it was being used to look for: a 16x6 uv region sitting
+transposed on a 6x16 face. If you doubt the renderer, render Create's own
+`mechanical_crafter/block.json` with it — that model rotates uvs on all six faces, so it
+either comes out looking like a crafter or the renderer is wrong.
+
+**Extract each mod's assets whole, once**, from the jars pinned in this pack. Extracting
+file-by-file is what left the previewer unable to resolve Create's parents and cost two
+rounds of grid work shipped blind. `unzip` with a wildcard is unreliable here; on MSYS it
+extracted directory entries and no files even with `MSYS2_ARG_CONV_EXCL` set — which is
+why `extract_assets.py` uses Python's `zipfile`. It writes into `tools/extracted/`, which
+is gitignored.
+
+What it will not tell you: anything drawn by a block entity renderer or a Flywheel visual,
+which for the grids is the shaft and the cogwheel. To look at those, render
+`block/p_grid_kinetics.json` on its own, or merge its elements into the body by hand.
 
 ## The crafter_side trap
 
@@ -167,6 +206,11 @@ Create never samples it: its side uvs take rows 0-6 on the front slab and rows 1
 back one, and the gap between them - z 6 to 10 - is a real hole in the geometry where the
 mechanism shows. Stretch the whole texture over one 0-16 cube and the block is
 see-through. This cost a round; it is why the body is built as two slabs and four rims.
+
+Read the other way round, the window is not a trap but the *point*: it is the slot a
+cogwheel's teeth stick out through. Create's crafter is an `ICogWheel` and its cogwheel is
+full size, teeth from -1 to 17, so they emerge through this window and mesh. Ours does the
+same.
 
 ## Verified in game
 
@@ -181,3 +225,8 @@ large cogwheel (they did not before - the item must be Create's `CogwheelBlockIt
 
 Not verified: the controller's shaft stubs spinning, the restored controller glow, and
 anything with Flywheel's backend switched off.
+
+**Nothing from the grid-body rebuild is in that list.** It all postdates the last session
+in the s1 demo instance, and the jar sitting in that instance is the build from before it.
+The whole of the grid section above is previewer work; see Known gaps for what to check
+first.

@@ -1,5 +1,5 @@
 {
-  "__comment": "Body rebuilt from Create's mechanical crafter element layout: two slabs with a gap at z 6-10 and four thin rims. crafter_side has a transparent window at rows 6-9 which Create never samples - its side uvs take rows 0-6 and 10-16 only, and the gap in the geometry is where the mechanism shows. Ours shows a cogwheel there. West faces are mirrored, as Create has them.",
+  "__comment": "Body follows Create's mechanical crafter: two slabs with a gap at z 6-10 and four thin rims. crafter_side has a transparent window at rows 6-9 which Create never samples - the gap in the geometry is where the mechanism shows, and ours shows the cogwheel. Every crafter_side face carries Create's own face rotation; without it a 16x6 uv region lands transposed on a 6x16 face and the sides stretch. The back is the gearbox face in three depths - 2px perimeter at the surface, the plate one in, the cogwheel well three in - with the rear shaft standing in the well. The shaft and the cogwheel are not here: they turn, so they live in block/p_grid_kinetics and are drawn by the block entity's Flywheel visual.",
   "parent": "block/block",
   "render_type": "cutout",
   "textures": {
@@ -9,9 +9,6 @@
     "side": "create:block/crafter_side",
     "inner_front": "create:block/brass_block",
     "inner_back": "create:block/smooth_dark_log_top",
-    "cog": "primitive_refined:block/obsidiansteel_cogwheel",
-    "shaft": "primitive_refined:block/soulstained_axis",
-    "shaft_end": "primitive_refined:block/soulstained_axis_top",
     "particle": "create:block/crafter_side"
   },
   "elements": [
@@ -55,6 +52,7 @@
             6
           ],
           "texture": "#side",
+          "rotation": 90,
           "cullface": "east"
         },
         "west": {
@@ -65,6 +63,7 @@
             6
           ],
           "texture": "#side",
+          "rotation": 270,
           "cullface": "west"
         },
         "up": {
@@ -85,6 +84,7 @@
             6
           ],
           "texture": "#side",
+          "rotation": 180,
           "cullface": "down"
         }
       }
@@ -102,16 +102,6 @@
         16
       ],
       "faces": {
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#back",
-          "cullface": "south"
-        },
         "north": {
           "uv": [
             0,
@@ -119,7 +109,8 @@
             16,
             16
           ],
-          "texture": "#inner_back"
+          "texture": "#inner_back",
+          "rotation": 270
         },
         "east": {
           "uv": [
@@ -129,6 +120,7 @@
             16
           ],
           "texture": "#side",
+          "rotation": 90,
           "cullface": "east"
         },
         "west": {
@@ -139,6 +131,7 @@
             16
           ],
           "texture": "#side",
+          "rotation": 270,
           "cullface": "west"
         },
         "up": {
@@ -159,6 +152,7 @@
             16
           ],
           "texture": "#side",
+          "rotation": 180,
           "cullface": "down"
         }
       }
@@ -193,7 +187,8 @@
             16,
             10
           ],
-          "texture": "#side"
+          "texture": "#side",
+          "rotation": 180
         }
       }
     },
@@ -227,6 +222,7 @@
             10
           ],
           "texture": "#side",
+          "rotation": 180,
           "cullface": "down"
         }
       }
@@ -252,6 +248,7 @@
             10
           ],
           "texture": "#side",
+          "rotation": 90,
           "cullface": "east"
         },
         "west": {
@@ -261,7 +258,8 @@
             16,
             10
           ],
-          "texture": "#side"
+          "texture": "#side",
+          "rotation": 270
         }
       }
     },
@@ -285,7 +283,8 @@
             16,
             10
           ],
-          "texture": "#side"
+          "texture": "#side",
+          "rotation": 90
         },
         "west": {
           "uv": [
@@ -295,145 +294,300 @@
             10
           ],
           "texture": "#side",
+          "rotation": 270,
           "cullface": "west"
         }
       }
     },
     {
-      "name": "cog",
+      "name": "back_well",
       "from": [
-        1,
-        1,
-        6.5
+        4,
+        4,
+        10
       ],
       "to": [
-        15,
-        15,
-        9.5
+        12,
+        12,
+        13
       ],
       "faces": {
-        "east": {
-          "uv": [
-            1,
-            1,
-            15,
-            15
-          ],
-          "texture": "#cog"
-        },
-        "west": {
-          "uv": [
-            1,
-            1,
-            15,
-            15
-          ],
-          "texture": "#cog"
-        },
-        "up": {
-          "uv": [
-            1,
-            1,
-            15,
-            15
-          ],
-          "texture": "#cog"
-        },
-        "down": {
-          "uv": [
-            1,
-            1,
-            15,
-            15
-          ],
-          "texture": "#cog"
-        },
-        "north": {
-          "uv": [
-            1,
-            1,
-            15,
-            15
-          ],
-          "texture": "#cog"
-        },
         "south": {
           "uv": [
-            1,
-            1,
-            15,
-            15
+            4,
+            4,
+            12,
+            12
           ],
-          "texture": "#cog"
+          "texture": "#back"
         }
       }
     },
     {
-      "name": "shaft",
+      "name": "mid_bottom",
       "from": [
-        6,
-        6,
-        16
+        2,
+        2,
+        13
       ],
       "to": [
-        10,
-        10,
-        17
+        14,
+        4,
+        15
       ],
       "faces": {
-        "north": {
-          "uv": [
-            6,
-            6,
-            10,
-            10
-          ],
-          "texture": "#shaft_end"
-        },
         "south": {
           "uv": [
-            6,
-            6,
-            10,
-            10
+            2,
+            12,
+            14,
+            14
           ],
-          "texture": "#shaft_end"
-        },
-        "east": {
-          "uv": [
-            6,
-            15,
-            10,
-            16
-          ],
-          "texture": "#shaft"
-        },
-        "west": {
-          "uv": [
-            6,
-            15,
-            10,
-            16
-          ],
-          "texture": "#shaft"
+          "texture": "#back"
         },
         "up": {
           "uv": [
-            6,
-            15,
-            10,
-            16
+            2,
+            2,
+            3,
+            3
           ],
-          "texture": "#shaft"
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "mid_top",
+      "from": [
+        2,
+        12,
+        13
+      ],
+      "to": [
+        14,
+        14,
+        15
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            2,
+            2,
+            14,
+            4
+          ],
+          "texture": "#back"
         },
         "down": {
           "uv": [
-            6,
-            15,
-            10,
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "mid_west",
+      "from": [
+        2,
+        4,
+        13
+      ],
+      "to": [
+        4,
+        12,
+        15
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            2,
+            4,
+            4,
+            12
+          ],
+          "texture": "#back"
+        },
+        "east": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "mid_east",
+      "from": [
+        12,
+        4,
+        13
+      ],
+      "to": [
+        14,
+        12,
+        15
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            12,
+            4,
+            14,
+            12
+          ],
+          "texture": "#back"
+        },
+        "west": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "frame_bottom",
+      "from": [
+        0,
+        0,
+        15
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            14,
+            16,
             16
           ],
-          "texture": "#shaft"
+          "texture": "#back",
+          "cullface": "south"
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "frame_top",
+      "from": [
+        0,
+        14,
+        15
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#back",
+          "cullface": "south"
+        },
+        "down": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "frame_west",
+      "from": [
+        0,
+        2,
+        15
+      ],
+      "to": [
+        2,
+        14,
+        16
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            2,
+            2,
+            14
+          ],
+          "texture": "#back",
+          "cullface": "south"
+        },
+        "east": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "frame_east",
+      "from": [
+        14,
+        2,
+        15
+      ],
+      "to": [
+        16,
+        14,
+        16
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            14,
+            2,
+            16,
+            14
+          ],
+          "texture": "#back",
+          "cullface": "south"
+        },
+        "west": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
         }
       }
     },
