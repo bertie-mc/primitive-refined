@@ -1,0 +1,8 @@
+{
+  "__comment": "Waterlogged is deliberately not listed: AbstractShaftBlock adds the property, but it changes nothing about the model, and an unlisted property matches any value.",
+  "variants": {
+    "axis=x": { "model": "primitive_refined:block/soulstained_shaft", "x": 90, "y": 90 },
+    "axis=y": { "model": "primitive_refined:block/soulstained_shaft" },
+    "axis=z": { "model": "primitive_refined:block/soulstained_shaft", "x": 90, "y": 180 }
+  }
+}

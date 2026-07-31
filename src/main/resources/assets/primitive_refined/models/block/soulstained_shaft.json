@@ -1,0 +1,24 @@
+{
+  "__comment": "A shaft is a 4x4x16 pole; the geometry is authored here rather than inherited from Create, whose model files are All Rights Reserved. The textures are Create's own, referenced by path and recoloured at runtime through tintindex 0 - see PrClient.SOULSTAINED_TINT.",
+  "parent": "block/block",
+  "textures": {
+    "particle": "create:block/axis",
+    "side": "create:block/axis",
+    "end": "create:block/axis_top"
+  },
+  "elements": [
+    {
+      "name": "shaft",
+      "from": [6, 0, 6],
+      "to": [10, 16, 10],
+      "faces": {
+        "north": {"uv": [6, 0, 10, 16], "texture": "#side", "tintindex": 0},
+        "east":  {"uv": [6, 0, 10, 16], "texture": "#side", "tintindex": 0},
+        "south": {"uv": [6, 0, 10, 16], "texture": "#side", "tintindex": 0},
+        "west":  {"uv": [6, 0, 10, 16], "texture": "#side", "tintindex": 0},
+        "up":    {"uv": [6, 6, 10, 10], "texture": "#end",  "tintindex": 0},
+        "down":  {"uv": [6, 6, 10, 10], "texture": "#end",  "tintindex": 0}
+      }
+    }
+  ]
+}

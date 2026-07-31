@@ -1,0 +1,85 @@
+{
+  "__comment": "Primitive Controller, running. Identical geometry to p_controller.json; the overlay swaps to the 12-frame animated cutout and its faces are marked full-bright, which is how Refined Storage lights its own controller (see its emissive_all_cutout model).",
+  "render_type": "cutout",
+  "textures": {
+    "side": "create:block/rotation_speed_controller",
+    "top": "create:block/rotation_speed_controller_top",
+    "overlay": "primitive_refined:block/p_controller_overlay",
+    "particle": "create:block/rotation_speed_controller"
+  },
+  "elements": [
+    {
+      "name": "bottom",
+      "from": [0, 0, 0],
+      "to": [16, 4, 16],
+      "faces": {
+        "north": {"uv": [0, 12, 16, 16], "texture": "#side", "cullface": "north"},
+        "east":  {"uv": [0, 12, 16, 16], "texture": "#side", "cullface": "east"},
+        "south": {"uv": [0, 12, 16, 16], "texture": "#side", "cullface": "south"},
+        "west":  {"uv": [0, 12, 16, 16], "texture": "#side", "cullface": "west"},
+        "down":  {"uv": [0, 0, 16, 16],  "texture": "#top",  "cullface": "down"}
+      }
+    },
+    {
+      "name": "middle",
+      "from": [1, 4, 1],
+      "to": [15, 12, 15],
+      "faces": {
+        "north": {"uv": [1, 0, 15, 8],  "texture": "#side"},
+        "south": {"uv": [1, 0, 15, 8],  "texture": "#side"},
+        "east":  {"uv": [1, 8, 15, 16], "texture": "#side"},
+        "west":  {"uv": [1, 8, 15, 16], "texture": "#side"}
+      }
+    },
+    {
+      "name": "top",
+      "from": [0, 12, 0],
+      "to": [16, 14, 16],
+      "faces": {
+        "north": {"uv": [0, 8, 16, 10], "texture": "#side", "cullface": "north"},
+        "east":  {"uv": [0, 8, 16, 10], "texture": "#side", "cullface": "east"},
+        "south": {"uv": [0, 8, 16, 10], "texture": "#side", "cullface": "south"},
+        "west":  {"uv": [0, 8, 16, 10], "texture": "#side", "cullface": "west"},
+        "up":    {"uv": [0, 0, 16, 16], "texture": "#top"}
+      }
+    },
+
+    {
+      "name": "overlay_strip_west",
+      "from": [0.99, 6, 3],
+      "to":   [0.99, 10, 13],
+      "faces": {
+        "west": {"uv": [3, 0, 13, 4], "texture": "#overlay",
+                 "neoforge_data": {"block_light": 15, "sky_light": 15}}
+      }
+    },
+    {
+      "name": "overlay_strip_east",
+      "from": [15.01, 6, 3],
+      "to":   [15.01, 10, 13],
+      "faces": {
+        "east": {"uv": [3, 4, 13, 8], "texture": "#overlay",
+                 "neoforge_data": {"block_light": 15, "sky_light": 15}}
+      }
+    },
+
+    {
+      "name": "overlay_l_north",
+      "from": [1, 4, 0.99],
+      "to":   [15, 12, 0.99],
+      "faces": {
+        "north": {"uv": [1, 8, 15, 16], "texture": "#overlay",
+                  "neoforge_data": {"block_light": 15, "sky_light": 15}}
+      }
+    },
+    {
+      "name": "overlay_l_south",
+      "from": [1, 4, 15.01],
+      "to":   [15, 12, 15.01],
+      "faces": {
+        "south": {"uv": [1, 8, 15, 16], "texture": "#overlay",
+                  "neoforge_data": {"block_light": 15, "sky_light": 15}}
+      }
+    }
+  ]
+}

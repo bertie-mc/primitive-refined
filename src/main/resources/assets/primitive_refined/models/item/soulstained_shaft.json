@@ -1,0 +1,7 @@
+{
+  "parent": "primitive_refined:block/soulstained_shaft",
+  "display": {
+    "gui":   {"rotation": [30, 225, 0], "translation": [0, 0, 0], "scale": [0.625, 0.625, 0.625]},
+    "fixed": {"rotation": [0, 0, 0],    "translation": [0, 0, 0], "scale": [0.5, 0.5, 0.5]}
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "__comment": "Same axis convention as Create's rotation_speed_controller: the model is authored for horizontal_axis=z and rotated 90 degrees for x.",
+  "variants": {
+    "horizontal_axis=z,lit=false": { "model": "primitive_refined:block/p_controller" },
+    "horizontal_axis=z,lit=true":  { "model": "primitive_refined:block/p_controller_lit" },
+    "horizontal_axis=x,lit=false": { "model": "primitive_refined:block/p_controller", "y": 90 },
+    "horizontal_axis=x,lit=true":  { "model": "primitive_refined:block/p_controller_lit", "y": 90 }
+  }
+}

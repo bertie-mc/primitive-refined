@@ -1,0 +1,83 @@
+{
+  "__comment": "Primitive Controller, unlit. Every wood pixel is Create's own rotation_speed_controller texture referenced by path - this mod ships no copy of it, because Create's assets are All Rights Reserved. The only texture we ship is the overlay, which is derived from Refined Storage's MIT controller cutout.",
+  "render_type": "cutout",
+  "textures": {
+    "side": "create:block/rotation_speed_controller",
+    "top": "create:block/rotation_speed_controller_top",
+    "overlay": "primitive_refined:block/p_controller_overlay_off",
+    "particle": "create:block/rotation_speed_controller"
+  },
+  "elements": [
+    {
+      "name": "bottom",
+      "from": [0, 0, 0],
+      "to": [16, 4, 16],
+      "faces": {
+        "north": {"uv": [0, 12, 16, 16], "texture": "#side", "cullface": "north"},
+        "east":  {"uv": [0, 12, 16, 16], "texture": "#side", "cullface": "east"},
+        "south": {"uv": [0, 12, 16, 16], "texture": "#side", "cullface": "south"},
+        "west":  {"uv": [0, 12, 16, 16], "texture": "#side", "cullface": "west"},
+        "down":  {"uv": [0, 0, 16, 16],  "texture": "#top",  "cullface": "down"}
+      }
+    },
+    {
+      "name": "middle",
+      "from": [1, 4, 1],
+      "to": [15, 12, 15],
+      "faces": {
+        "north": {"uv": [1, 0, 15, 8],  "texture": "#side"},
+        "south": {"uv": [1, 0, 15, 8],  "texture": "#side"},
+        "east":  {"uv": [1, 8, 15, 16], "texture": "#side"},
+        "west":  {"uv": [1, 8, 15, 16], "texture": "#side"}
+      }
+    },
+    {
+      "name": "top",
+      "from": [0, 12, 0],
+      "to": [16, 14, 16],
+      "faces": {
+        "north": {"uv": [0, 8, 16, 10], "texture": "#side", "cullface": "north"},
+        "east":  {"uv": [0, 8, 16, 10], "texture": "#side", "cullface": "east"},
+        "south": {"uv": [0, 8, 16, 10], "texture": "#side", "cullface": "south"},
+        "west":  {"uv": [0, 8, 16, 10], "texture": "#side", "cullface": "west"},
+        "up":    {"uv": [0, 0, 16, 16], "texture": "#top"}
+      }
+    },
+
+    {
+      "__comment": "overlay: 10x4 controller strip on the two wide faces (perpendicular to the shaft axis)",
+      "name": "overlay_strip_west",
+      "from": [0.99, 6, 3],
+      "to":   [0.99, 10, 13],
+      "faces": {
+        "west": {"uv": [3, 0, 13, 4], "texture": "#overlay"}
+      }
+    },
+    {
+      "name": "overlay_strip_east",
+      "from": [15.01, 6, 3],
+      "to":   [15.01, 10, 13],
+      "faces": {
+        "east": {"uv": [3, 4, 13, 8], "texture": "#overlay"}
+      }
+    },
+
+    {
+      "__comment": "overlay: the L pair flanking the shaft socket, on the two axis faces",
+      "name": "overlay_l_north",
+      "from": [1, 4, 0.99],
+      "to":   [15, 12, 0.99],
+      "faces": {
+        "north": {"uv": [1, 8, 15, 16], "texture": "#overlay"}
+      }
+    },
+    {
+      "name": "overlay_l_south",
+      "from": [1, 4, 15.01],
+      "to":   [15, 12, 15.01],
+      "faces": {
+        "south": {"uv": [1, 8, 15, 16], "texture": "#overlay"}
+      }
+    }
+  ]
+}
