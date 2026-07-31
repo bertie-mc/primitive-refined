@@ -11,30 +11,18 @@ permissions:
 
 jobs:
   build:
-    uses: bertie-mc/bertie-ci/.github/workflows/build-mod.yml@v3.4.0
+    uses: bertie-mc/bertie-ci/.github/workflows/build-mod.yml@v3.4.1
 
   client:
     needs: build
-    uses: bertie-mc/bertie-ci/.github/workflows/client.yml@v3.4.0
+    uses: bertie-mc/bertie-ci/.github/workflows/client.yml@v3.4.1
     with:
       artifact-name: ${{ needs.build.outputs.artifact-name }}
-      # Both dependencies are hard, so both have to be present or the probe never gets
-      # past mod loading. `refined-storage` needs a profile of that name adding to
-      # bertie-ci's fixtures/profiles.json - the canonical pack already carries
-      # refined-storage.pw.toml, so it is one line there plus a new bertie-ci tag.
-      # Until that lands these two jobs fail on an unknown profile. The build job, and
-      # therefore release.yml, is unaffected.
       fixture: create,refined-storage
 
   server:
     needs: build
-    uses: bertie-mc/bertie-ci/.github/workflows/server.yml@v3.4.0
+    uses: bertie-mc/bertie-ci/.github/workflows/server.yml@v3.4.1
     with:
       artifact-name: ${{ needs.build.outputs.artifact-name }}
-      # Both dependencies are hard, so both have to be present or the probe never gets
-      # past mod loading. `refined-storage` needs a profile of that name adding to
-      # bertie-ci's fixtures/profiles.json - the canonical pack already carries
-      # refined-storage.pw.toml, so it is one line there plus a new bertie-ci tag.
-      # Until that lands these two jobs fail on an unknown profile. The build job, and
-      # therefore release.yml, is unaffected.
       fixture: create,refined-storage
