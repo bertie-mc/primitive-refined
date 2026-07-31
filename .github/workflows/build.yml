@@ -11,11 +11,11 @@ permissions:
 
 jobs:
   build:
-    uses: bertie-mc/bertie-ci/.github/workflows/build-mod.yml@v3.3.3
+    uses: bertie-mc/bertie-ci/.github/workflows/build-mod.yml@v3.4.0
 
   client:
     needs: build
-    uses: bertie-mc/bertie-ci/.github/workflows/client.yml@v3.3.3
+    uses: bertie-mc/bertie-ci/.github/workflows/client.yml@v3.4.0
     with:
       artifact-name: ${{ needs.build.outputs.artifact-name }}
       # Both dependencies are hard, so both have to be present or the probe never gets
@@ -28,7 +28,7 @@ jobs:
 
   server:
     needs: build
-    uses: bertie-mc/bertie-ci/.github/workflows/server.yml@v3.3.3
+    uses: bertie-mc/bertie-ci/.github/workflows/server.yml@v3.4.0
     with:
       artifact-name: ${{ needs.build.outputs.artifact-name }}
       # Both dependencies are hard, so both have to be present or the probe never gets
