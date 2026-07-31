@@ -78,10 +78,13 @@ REFINED STORAGE - MIT
   block/external_reader_side_glow_a.png   block/external_reader_side_glow_b.png
   block/external_reader_side_glow_full.png
 
-  The External Reader's glow layers take their two colours, their bright flare
-  and their frame cadence from block/controller/cutouts/purple - measured off
-  that animation rather than approximated. The layout is Create's indicator
-  geometry; only the colour and the pulse are Refined Storage's.
+  The External Reader's glow layers take their colour ramp and their frame
+  cadence from block/controller/cutouts/purple - twelve frames at frametime 2,
+  and a gradient running purple to magenta to its bright peak, measured off that
+  animation rather than approximated. The controller draws traces as runs of
+  pixels with the gradient flowing along them, and the reader's panel is filled
+  the same way. The panel's outline is Create's indicator geometry; the colour
+  and the movement are Refined Storage's.
 
 Derived from Refined Storage's controller and grid cutouts by Refined Mods -
 the purple variants for the lit faces, "inactive" for the unlit ones - which is

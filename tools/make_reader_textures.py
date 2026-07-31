@@ -23,25 +23,22 @@ CREATE = os.path.join(EXTRACTED, "create", "textures", "block")
 OUT = os.path.join(HERE, os.pardir, "src", "main", "resources", "assets",
                    "primitive_refined", "textures", "block")
 
-# Refined Storage's own controller cutout colours and cadence, lifted from
-# refinedstorage:block/controller/cutouts/purple, so the reader pulses like an RS
-# controller rather than like something invented here. Two colours, which is exactly
-# what the checkerboard needs.
+# Refined Storage's controller cutout, lifted from
+# refinedstorage:block/controller/cutouts/purple. Its traces are runs of pixels with a
+# gradient flowing along them - not pixels twinkling on their own, which is what an
+# earlier version of this file did and why the display read as a static checkerboard
+# with white dots skittering over it.
 PURPLE = (132, 43, 206)
 MAGENTA = (181, 50, 207)
-FRAMETIME = 1        # RS uses 2; this is the "twice as fast" that was asked for
-
-# Unlit: the dark neutral screen the grids already use when unpowered, as a matching
-# two-tone checkerboard so the pattern still reads when the machine is stopped.
-OFF_A = (35, 38, 43)
-OFF_B = (46, 49, 56)
-
-# The bright end of RS's shimmer. Its pixels sit at their base colour and briefly ramp
-# up to about here before settling back - measured off the animation, not guessed.
 PEAK = (188, 106, 215)
 
-FRAMES = 12          # RS's own frame count, at half its frametime: twice the speed
-PULSE = 0.30         # share of a cell's cycle spent ramping up and back down
+# The controller's own cadence, unchanged: twelve frames at frametime 2.
+FRAMES = 12
+FRAMETIME = 2
+
+# Unlit: the dark neutral screen the grids already use when unpowered. Flat, not a
+# checkerboard - the lit display is one 4x10 panel, so the dark one should be too.
+OFF = (35, 38, 43)
 
 PATTERN_COLS = range(6, 10)
 PATTERN_ROWS = range(3, 13)
@@ -100,60 +97,79 @@ def front():
     save(im, "external_reader_front")
 
 
-def parity(x, y):
-    return (x + y) % 2 == 0
-
-
-def cell_colours(x, y):
-    return (OFF_A, PURPLE) if parity(x, y) else (OFF_B, MAGENTA)
-
-
 def side_base():
-    """The unlit side: one uniform two-colour checkerboard, no level-meter shading."""
+    """The unlit side: one flat dark panel."""
     im = load(CREATE, "threshold_switch/level_0")
     px = im.load()
     for y in PATTERN_ROWS:
         for x in PATTERN_COLS:
-            px[x, y] = cell_colours(x, y)[0] + (255,)
+            px[x, y] = OFF + (255,)
     save(im, "external_reader_side")
 
 
-def shimmer(phase):
-    """How far a cell is toward the bright peak.
+def ramp():
+    """The colour a segment runs through, end to end and back.
 
-    Every cell is lit the whole time the machine is powered; what moves is a flare
-    passing over it. That is what Refined Storage's controller pixels do - sit at their
-    colour, briefly flare, settle back - rather than switching on and off.
+    Purple into magenta into the bright peak and back down, which is the sweep the
+    controller's traces make. Twelve entries, one per frame, so a segment advances
+    exactly one step per frame.
     """
-    p = phase % 1.0
-    if p >= PULSE:
-        return 0.0
-    return 1.0 - abs(p / PULSE * 2.0 - 1.0)
+    stops = [PURPLE, MAGENTA, PEAK, MAGENTA]
+    out = []
+    for i in range(FRAMES):
+        pos = i / FRAMES * len(stops)
+        a = stops[int(pos) % len(stops)]
+        b = stops[(int(pos) + 1) % len(stops)]
+        out.append(lerp(a, b, pos - int(pos))[:3])
+    return out
 
 
-def glow_frame(phases, t):
-    """Written in colour rather than alpha: these models are cutout, where alpha is all
-    or nothing, so a mid-flare pixel has to be a colour between base and peak."""
+RAMP = ramp()
+
+
+def segments(seed):
+    """Carve the 4x10 panel into runs, and give each one a starting point on the ramp.
+
+    Vertical runs of two to four, packed down each column, so the panel is completely
+    filled and reads as segments rather than as loose pixels.
+    """
+    rng = random.Random(seed)
+    out = []
+    for x in PATTERN_COLS:
+        y = PATTERN_ROWS.start
+        while y < PATTERN_ROWS.stop:
+            length = min(rng.randint(2, 4), PATTERN_ROWS.stop - y)
+            out.append(([(x, y + i) for i in range(length)], rng.randrange(FRAMES)))
+            y += length
+    return out
+
+
+def glow_frame(segs, t):
+    """One frame: every cell lit, coloured by where it sits along its segment's gradient.
+
+    Written in colour rather than alpha, because these models are cutout and alpha there
+    is all or nothing.
+    """
     im = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
     px = im.load()
-    for (x, y), ph in phases.items():
-        base = cell_colours(x, y)[1]
-        px[x, y] = lerp(base, PEAK, shimmer(ph + t / FRAMES))
+    for cells, offset in segs:
+        for i, (x, y) in enumerate(cells):
+            px[x, y] = RAMP[(i + offset + t) % FRAMES] + (255,)
     return im
 
 
 def glow(seed, name):
-    """Each cell flares at its own random phase, so they read as independent.
+    """The gradient advances one step per frame, so it travels along each segment.
 
-    Two of these exist with different seeds, and opposite sides of the block take
-    different ones. That is the only way to get them out of step: Minecraft drives every
-    animation off the same game time, so one texture on both faces is frame-locked.
+    Two of these exist with different seeds - different segment layouts and different
+    starting points - and opposite sides of the block take different ones. That is the
+    only way to get them out of step: Minecraft drives every animation off the same game
+    time, so one texture on both faces is frame-locked.
     """
-    rng = random.Random(seed)
-    phases = {c: rng.random() for c in CELLS}
+    segs = segments(seed)
     im = Image.new("RGBA", (16, 16 * FRAMES), (0, 0, 0, 0))
     for t in range(FRAMES):
-        im.paste(glow_frame(phases, t), (0, 16 * t))
+        im.paste(glow_frame(segs, t), (0, 16 * t))
     save(im, name)
     with open(os.path.join(OUT, name + ".png.mcmeta"), "w", newline="\n") as fh:
         json.dump({"animation": {"frametime": FRAMETIME, "interpolate": False}}, fh,
@@ -162,9 +178,8 @@ def glow(seed, name):
 
 
 def glow_full(name):
-    """Every cell at its base colour, none flaring - a still frame, so the item's icon
-    does not animate in the inventory."""
-    save(glow_frame({c: PULSE for c in CELLS}, 0), name)
+    """A still frame of the lit panel, for the item - so its icon does not animate."""
+    save(glow_frame(segments(20260731), 0), name)
 
 
 if __name__ == "__main__":
