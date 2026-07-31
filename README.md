@@ -184,10 +184,17 @@ its own mechanical crafter with. That reasoning is from the bytecode, not from p
   cannot be tested from the previewer and would have shipped unverified either way.
 - **No recipes.** Everything is creative-tab only.
 
-Possibly not a fault: **shafts placed on the ground look slightly rotated.** Create applies
-a per-position rotation offset (`getRotationAngleOffset`) so neighbouring shafts look
-continuous, and `SingleAxisRotatingVisual` honours it. Create's own shafts do the same.
-Compare ours against a Create shaft at rest before changing anything.
+### Settled: the shaft's resting angle is deliberate — leave it
+
+**Shafts at rest sit at an angle inside an axis-aligned outline.** Create applies a
+per-position rotation offset (`getRotationAngleOffset`) so that neighbouring shafts look
+continuous, `SingleAxisRotatingVisual` honours it, and Create's own shafts do the same.
+The block's hitbox and selection outline do not follow that rotation, because a hitbox is
+a `VoxelShape` — axis-aligned by definition — and the angle is a render-time transform the
+game never sees.
+
+berlord looked at this in game and **decided to keep it as it is**, hitbox included. It is
+not a fault and it is not an open question. Do not "align" it.
 
 ## Previewing models without launching the game
 
