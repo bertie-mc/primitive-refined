@@ -1,0 +1,7 @@
+{
+  "__comment": "Create's rotation_speed_controller model as parent - geometry and every other texture still Create's - with only the side texture swapped for our merged copy. That copy is Create's own texture with berlord's 50 pixels baked in: the two 5-pixel L's on the socket half and the 10x4 controller insert on the wood half.",
+  "parent": "create:block/rotation_speed_controller/block",
+  "textures": {
+    "0": "primitive_refined:block/p_controller_side"
+  }
+}

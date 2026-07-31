@@ -24,6 +24,11 @@ Derived from Create (The Create Team / Creators of Create):
   block/soulstained_cogwheel_axis.png     from create:block/cogwheel_axis
   block/obsidiansteel_cogwheel.png        from create:block/cogwheel
   block/p_grid_back.png                   from create:block/brass_gearbox
+  block/p_controller_side.png             from create:block/rotation_speed_controller
+  block/p_controller_side_off.png         from create:block/rotation_speed_controller
+
+  The two controller side textures are Create's own with 50 pixels replaced by
+  Refined Storage's (10 for the paired L's, 40 for the insert).
 
   The grid front faces below are flattened composites and contain Create pixels
   too - create:block/railway_casing_side forms the brass frame and recess under
@@ -34,8 +39,8 @@ Derived from Create (The Create Team / Creators of Create):
 
   Each is a luminance remap: Create's shading is preserved and only the palette
   is replaced. Models additionally reference Create's own models and textures by
-  path at runtime (parent "create:block/cogwheel", and the controller's
-  blockstate layering over "create:block/rotation_speed_controller/block").
+  path at runtime (parent "create:block/cogwheel", and the controller and grid
+  models take Create's own models as their parent).
 
 Palettes taken from:
 
@@ -45,7 +50,7 @@ Palettes taken from:
 
 REFINED STORAGE - MIT
 
-  block/p_controller_overlay_*.png
+  block/p_controller_side*.png
   block/p_grid_front*.png                 block/p_grid_screen_glow.png
   block/p_crafting_grid_front*.png        block/p_crafting_grid_screen_glow.png
 
