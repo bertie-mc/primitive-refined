@@ -63,7 +63,12 @@ dependencies {
     // the supertype chain without ponder on the classpath. Catnip rides along inside
     // this jar; there is no standalone catnip artifact for 1.21.1.
     compileOnly("net.createmod.ponder:ponder-neoforge:${ponder_version}") { transitive = false }
-    compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-1.21.1:${flywheel_version}") { transitive = false }
+
+    // The full flywheel artifact, not -api-: SimpleBlockEntityVisualizer lives in
+    // dev.engine_room.flywheel.lib, which the api-only jar does not carry. Registering a
+    // visual is what makes the shaft spin *and* what stops its static blockstate model
+    // being drawn on top of the spinning one.
+    compileOnly("dev.engine-room.flywheel:flywheel-neoforge-1.21.1:${flywheel_version}") { transitive = false }
 
     // A dev-time `runClient` would additionally need the real Create jar on the
     // runtime classpath. It is deliberately absent: this project builds a jar for the

@@ -74,9 +74,6 @@ will be wiped by the next pack sync of that instance. Closing the gap means crea
 
 ## Known gaps
 
-- **The Soulstained Shaft does not visibly spin.** It renders from its static block model;
-  no block entity renderer or Flywheel visual is registered, so Create's rotation
-  animation does not apply to it. Function is unaffected.
 - **The controller can drive the cogwheel above it, but not be driven by it.** Create's
   `RotationPropagator` hardcodes its own block for the large-cog-to-speed-controller case,
   so the reverse direction would need a hook on Create's cogwheel entity that an addon
