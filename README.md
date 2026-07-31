@@ -109,14 +109,9 @@ Released. [`bertie-mc/primitive-refined`](https://github.com/bertie-mc/primitive
 jar attached to each GitHub Release by `release.yml`. The current version is whatever
 `mod_version` in `gradle.properties` says — this file deliberately does not repeat it.
 
-`packs/s1-pack` consumes it — `mods/primitive-refined.pw.toml`, added with
-`packwiz github add bertie-mc/primitive-refined` and moved on with `packwiz update`. The
-**s1 demo** instance is synced against that pack, which replaced the hand-copied jar that
-had been sitting there since before the grid rebuild. Nothing is hand-copied any more; a
-re-sync brings the released build.
-
-It is **not** in `packs/bertie-pack`, `packs/full-test-pack` or `packs/worldgen-pack`.
-Adding it is one `packwiz github add` in each, whenever those packs want it.
+The bertie pack does not currently include it. Add the release with
+`packwiz github add bertie-mc/primitive-refined`; instances should then be synced from
+packwiz rather than populated with hand-copied jars.
 
 ### CI
 
@@ -290,7 +285,7 @@ same.
 
 ## Verified in game
 
-Confirmed by berlord in the s1 demo instance: the controller renders and lights, its
+Confirmed by berlord in the development instance: the controller renders and lights, its
 goggle readout reports every lit condition, it takes power both through its horizontal
 shaft line and from a large cogwheel above (the mixin), it drives that cogwheel, and the
 Arcanetic Shaft relays force and spins.
@@ -302,7 +297,7 @@ large cogwheel (they did not before - the item must be Create's `CogwheelBlockIt
 Not verified: the controller's shaft stubs spinning, the restored controller glow, and
 anything with Flywheel's backend switched off.
 
-**Nothing from the grid-body rebuild is in that list.** It all postdates the last session
-in the s1 demo instance. The whole of the grid section above is previewer work; see Known
-gaps for what to check first. The instance now carries the `v0.1.0` release, so it is
-finally possible to look.
+**Nothing from the grid-body rebuild is in that list.** It all postdates the last in-game
+verification session. The whole of the grid section above is previewer work; see Known
+gaps for what to check first. The instance used for that session carried the `v0.1.0`
+release.
