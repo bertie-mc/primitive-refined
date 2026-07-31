@@ -3,9 +3,14 @@ package com.berlord.primitiverefined;
 import com.berlord.primitiverefined.content.cogwheel.PrCogwheels;
 import com.berlord.primitiverefined.content.controller.PControllerBlock;
 import com.berlord.primitiverefined.content.controller.PControllerBlockEntity;
+import com.berlord.primitiverefined.content.gearbox.ArcaneticGearboxBlock;
+import com.berlord.primitiverefined.content.gearbox.VerticalArcaneticGearboxItem;
 import com.berlord.primitiverefined.content.grid.PGridBlock;
+import com.berlord.primitiverefined.content.reader.ExternalReaderBlock;
+import com.berlord.primitiverefined.content.reader.ExternalReaderBlockEntity;
 import com.berlord.primitiverefined.content.grid.PGridBlockEntity;
 import com.berlord.primitiverefined.content.shaft.SoulstainedShaftBlock;
+import com.simibubi.create.content.kinetics.gearbox.GearboxBlockEntity;
 import com.simibubi.create.content.kinetics.simpleRelays.BracketedKineticBlockEntity;
 
 import net.minecraft.core.registries.Registries;
@@ -63,6 +68,27 @@ public final class PrRegistry {
             () -> new PGridBlock(gridProperties(), PrStress.CRAFTING_GRID, () -> PrRegistry.P_CRAFTING_GRID_BE.get()));
 
 
+    /**
+     * The External Reader. {@code noOcclusion} for the same reason the grids have it: its
+     * shaft is a Flywheel instance, and an instance is lit from the light at the block's
+     * own position, which an occluding block leaves at zero.
+     */
+    public static final DeferredBlock<ExternalReaderBlock> EXTERNAL_READER = BLOCKS.register("external_reader",
+            () -> new ExternalReaderBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.PODZOL)
+                    .sound(SoundType.WOOD)
+                    .noOcclusion()
+                    .strength(2.0F)));
+
+    /** Create's gearbox in our materials. Not a full cube - the core is inset. */
+    public static final DeferredBlock<ArcaneticGearboxBlock> ARCANETIC_GEARBOX =
+            BLOCKS.register("arcanetic_gearbox", () -> new ArcaneticGearboxBlock(
+                    BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.PODZOL)
+                            .sound(SoundType.WOOD)
+                            .noOcclusion()
+                            .strength(2.0F)));
+
     private static BlockBehaviour.Properties gridProperties() {
         return BlockBehaviour.Properties.of()
                 .mapColor(MapColor.TERRACOTTA_YELLOW)
@@ -92,6 +118,21 @@ public final class PrRegistry {
 
     public static final DeferredItem<BlockItem> P_CRAFTING_GRID_ITEM =
             ITEMS.registerSimpleBlockItem("p_crafting_grid", P_CRAFTING_GRID);
+
+    public static final DeferredItem<BlockItem> EXTERNAL_READER_ITEM =
+            ITEMS.registerSimpleBlockItem("external_reader", EXTERNAL_READER);
+
+    public static final DeferredItem<BlockItem> ARCANETIC_GEARBOX_ITEM =
+            ITEMS.registerSimpleBlockItem("arcanetic_gearbox", ARCANETIC_GEARBOX);
+
+    /**
+     * The same block, placed on a horizontal axis. One block, two items - which is how
+     * Create ships its own vertical gearbox, and why this needs no second block entity.
+     */
+    public static final DeferredItem<VerticalArcaneticGearboxItem> ARCANETIC_GEARBOX_VERTICAL_ITEM =
+            ITEMS.register("arcanetic_gearbox_vertical",
+                    () -> new VerticalArcaneticGearboxItem(ARCANETIC_GEARBOX.get(),
+                            new net.minecraft.world.item.Item.Properties()));
 
 
     // --- Block entities ---------------------------------------------------------
@@ -125,6 +166,19 @@ public final class PrRegistry {
                             P_CRAFTING_GRID.get())
                     .build(null));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ExternalReaderBlockEntity>> EXTERNAL_READER_BE =
+            BLOCK_ENTITIES.register("external_reader", () -> BlockEntityType.Builder
+                    .of((pos, state) -> new ExternalReaderBlockEntity(PrRegistry.EXTERNAL_READER_BE.get(), pos, state),
+                            EXTERNAL_READER.get())
+                    .build(null));
+
+    /** Create's own GearboxBlockEntity, registered against our block. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GearboxBlockEntity>> ARCANETIC_GEARBOX_BE =
+            BLOCK_ENTITIES.register("arcanetic_gearbox", () -> BlockEntityType.Builder
+                    .of((pos, state) -> new GearboxBlockEntity(PrRegistry.ARCANETIC_GEARBOX_BE.get(), pos, state),
+                            ARCANETIC_GEARBOX.get())
+                    .build(null));
+
     // --- Creative tab -----------------------------------------------------------
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = TABS.register("main",
@@ -136,6 +190,9 @@ public final class PrRegistry {
                         output.accept(SOULSTAINED_SHAFT_ITEM.get());
                         output.accept(P_GRID_ITEM.get());
                         output.accept(P_CRAFTING_GRID_ITEM.get());
+                        output.accept(EXTERNAL_READER_ITEM.get());
+                        output.accept(ARCANETIC_GEARBOX_ITEM.get());
+                        output.accept(ARCANETIC_GEARBOX_VERTICAL_ITEM.get());
                         PrCogwheels.ITEMS.values().forEach(i -> output.accept(i.get()));
                     })
                     .build());

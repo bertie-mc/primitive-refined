@@ -50,6 +50,14 @@ public final class PrClient {
     private static final PartialModel GRID_KINETICS =
             PartialModel.of(PrimitiveRefined.id("block/p_grid_kinetics"));
 
+    /** The External Reader's rear shaft. */
+    private static final PartialModel READER_SHAFT =
+            PartialModel.of(PrimitiveRefined.id("block/external_reader_shaft"));
+
+    /** One half-shaft; the gearbox visual makes four copies and turns each onto a face. */
+    private static final PartialModel GEARBOX_SHAFT =
+            PartialModel.of(PrimitiveRefined.id("block/arcanetic_gearbox_shaft"));
+
     /**
      * The Flywheel visual - the path that actually runs in normal play.
      *
@@ -100,6 +108,20 @@ public final class PrClient {
             SimpleBlockEntityVisualizer
                     .builder(PrRegistry.P_CRAFTING_GRID_BE.get())
                     .factory(OrientedRotatingVisual.backHorizontal(GRID_KINETICS))
+                    .apply();
+
+            // The External Reader's shaft, on the same footing as the grids': one end
+            // only, so it needs the direction-aware visual rather than the axis one.
+            SimpleBlockEntityVisualizer
+                    .builder(PrRegistry.EXTERNAL_READER_BE.get())
+                    .factory(OrientedRotatingVisual.backHorizontal(READER_SHAFT))
+                    .apply();
+
+            // Four shafts at four different speeds, so none of the stock visuals fit.
+            SimpleBlockEntityVisualizer
+                    .builder(PrRegistry.ARCANETIC_GEARBOX_BE.get())
+                    .factory((ctx, be, partialTick) ->
+                            new ArcaneticGearboxVisual(ctx, be, partialTick, GEARBOX_SHAFT))
                     .apply();
         });
     }

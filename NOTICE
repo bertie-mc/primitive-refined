@@ -32,11 +32,22 @@ Derived from Create (The Create Team / Creators of Create):
   block/external_reader_side_glow_b.png   from create:block/threshold_switch/level_5
   block/external_reader_side_glow_full.png  from create:block/threshold_switch/level_5
 
+  block/arcanetic_gearbox.png             from create:block/gearbox, with
+                                          create:block/brass_casing and
+                                          create:block/brass_gearbox
+
   The External Reader's front moves Create's own pixels rather than repainting
   them: the indicator square is hue-rotated red to purple with saturation and
-  value untouched, and the ring around it is scaled down in value alone. The
-  three side glow layers carry only the lit pixels of Create's level indicator,
-  hue-rotated onto this mod's two screen colours.
+  value untouched, and the ring around it is scaled down in value alone. Its
+  side glow layers are laid out on Create's indicator geometry but coloured from
+  Refined Storage (below).
+
+  The Arcanetic Gearbox panel is a per-pixel substitution into Create's own
+  gearbox panel: the light grey casing ring takes brass casing's pixel at the
+  same coordinate, and the wood and shaft socket take brass_gearbox's - the face
+  Create's sequenced gearshift puts on the two ends its axis runs through.
+  Shape and shading are Create's; only which Create material fills them changes.
+  Models additionally point at create:block/brass_casing directly for the caps.
 
   The two controller side textures are Create's own with 50 pixels replaced by
   Refined Storage's (10 for the paired L's, 40 for the insert).
@@ -64,6 +75,13 @@ REFINED STORAGE - MIT
   block/p_controller_side*.png
   block/p_grid_front*.png                 block/p_grid_screen_glow.png
   block/p_crafting_grid_front*.png        block/p_crafting_grid_screen_glow.png
+  block/external_reader_side_glow_a.png   block/external_reader_side_glow_b.png
+  block/external_reader_side_glow_full.png
+
+  The External Reader's glow layers take their two colours, their bright flare
+  and their frame cadence from block/controller/cutouts/purple - measured off
+  that animation rather than approximated. The layout is Create's indicator
+  geometry; only the colour and the pulse are Refined Storage's.
 
 Derived from Refined Storage's controller and grid cutouts by Refined Mods -
 the purple variants for the lit faces, "inactive" for the unlit ones - which is

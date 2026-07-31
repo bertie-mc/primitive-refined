@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=north,lit=false": {
+      "model": "primitive_refined:block/external_reader"
+    },
+    "facing=north,lit=true": {
+      "model": "primitive_refined:block/external_reader_lit"
+    },
+    "facing=east,lit=false": {
+      "model": "primitive_refined:block/external_reader",
+      "y": 90
+    },
+    "facing=east,lit=true": {
+      "model": "primitive_refined:block/external_reader_lit",
+      "y": 90
+    },
+    "facing=south,lit=false": {
+      "model": "primitive_refined:block/external_reader",
+      "y": 180
+    },
+    "facing=south,lit=true": {
+      "model": "primitive_refined:block/external_reader_lit",
+      "y": 180
+    },
+    "facing=west,lit=false": {
+      "model": "primitive_refined:block/external_reader",
+      "y": 270
+    },
+    "facing=west,lit=true": {
+      "model": "primitive_refined:block/external_reader_lit",
+      "y": 270
+    }
+  }
+}

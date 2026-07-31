@@ -19,8 +19,8 @@ public final class PrStress {
     /** Cables only carry the network; they cost nothing to keep turning. */
     public static final float CABLE = 0f;
 
-    /** External storage - one per attached inventory. */
-    public static final float EXTERNAL_STORAGE = 1f;
+    /** The External Reader - one per attached inventory. */
+    public static final float EXTERNAL_READER = 1f;
 
     /** A plain grid. */
     public static final float GRID = 5f;
@@ -42,7 +42,7 @@ public final class PrStress {
     /**
      * Total stress the network attached to {@code controllerPos} demands.
      *
-     * <p>Demo build: the cable, grid, crafting grid and external storage blocks do not
+     * <p>Demo build: the cable block does not
      * exist yet, so there is nothing to walk and the answer is always {@link #CONTROLLER}.
      * When the cable block lands this becomes a flood fill from the controller over
      * connected cables, summing {@link Part#primitiveStressDemand()} for everything it

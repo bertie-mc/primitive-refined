@@ -1,0 +1,85 @@
+{
+  "__comment": "The External Reader's rear shaft. Authored pointing south (+Z) because OrientedRotatingVisual.backHorizontal turns SOUTH onto HORIZONTAL_FACING.getOpposite(), which is the face it stands on.",
+  "parent": "block/block",
+  "render_type": "cutout",
+  "textures": {
+    "shaft": "primitive_refined:block/soulstained_axis",
+    "shaft_end": "primitive_refined:block/soulstained_axis_top",
+    "particle": "primitive_refined:block/soulstained_axis"
+  },
+  "elements": [
+    {
+      "name": "shaft",
+      "from": [
+        6,
+        6,
+        12
+      ],
+      "to": [
+        10,
+        10,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "texture": "#shaft_end",
+          "rotation": 180
+        },
+        "south": {
+          "uv": [
+            6,
+            6,
+            10,
+            10
+          ],
+          "texture": "#shaft_end"
+        },
+        "east": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#shaft",
+          "rotation": 270
+        },
+        "west": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#shaft",
+          "rotation": 90
+        },
+        "up": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#shaft",
+          "rotation": 180
+        },
+        "down": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#shaft"
+        }
+      }
+    }
+  ]
+}

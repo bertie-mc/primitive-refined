@@ -1,0 +1,300 @@
+{
+  "__comment": "Create's threshold switch, with its back rebuilt. Front pad and top/bottom are Create's own, element for element. The back is two depths: the 2px perimeter stays at the block face and so does the middle 4x4, but as a turning shaft rather than texture; everything between them is one pixel in. The shaft is not in this model - it turns, so it lives in block/external_reader_shaft and is drawn by the block entity's Flywheel visual, and a visual does not suppress the block model.",
+  "parent": "block/block",
+  "render_type": "cutout",
+  "textures": {
+    "front": "primitive_refined:block/external_reader_front",
+    "side": "primitive_refined:block/external_reader_side",
+    "back": "create:block/threshold_switch_back",
+    "top": "create:block/smart_observer_top",
+    "particle": "primitive_refined:block/external_reader_front"
+  },
+  "elements": [
+    {
+      "name": "body",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#front",
+          "cullface": "north"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side",
+          "cullface": "east"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side",
+          "cullface": "west"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#top",
+          "rotation": 180,
+          "cullface": "up"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#top",
+          "cullface": "down"
+        }
+      }
+    },
+    {
+      "name": "pad",
+      "from": [
+        2.95,
+        2.95,
+        -1.95
+      ],
+      "to": [
+        13.05,
+        13.05,
+        0.1
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            3,
+            13,
+            13
+          ],
+          "texture": "#front"
+        },
+        "east": {
+          "uv": [
+            5,
+            3,
+            3,
+            13
+          ],
+          "texture": "#front"
+        },
+        "west": {
+          "uv": [
+            13,
+            3,
+            11,
+            13
+          ],
+          "texture": "#front"
+        },
+        "up": {
+          "uv": [
+            13,
+            3,
+            3,
+            5
+          ],
+          "texture": "#front"
+        },
+        "down": {
+          "uv": [
+            13,
+            11,
+            3,
+            13
+          ],
+          "texture": "#front"
+        }
+      }
+    },
+    {
+      "name": "back_plate",
+      "from": [
+        2,
+        2,
+        10
+      ],
+      "to": [
+        14,
+        14,
+        15
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            2,
+            2,
+            14,
+            14
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "frame_bottom",
+      "from": [
+        0,
+        0,
+        15
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            14,
+            16,
+            16
+          ],
+          "texture": "#back",
+          "cullface": "south"
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "frame_top",
+      "from": [
+        0,
+        14,
+        15
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            2
+          ],
+          "texture": "#back",
+          "cullface": "south"
+        },
+        "down": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "frame_west",
+      "from": [
+        0,
+        2,
+        15
+      ],
+      "to": [
+        2,
+        14,
+        16
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            0,
+            2,
+            2,
+            14
+          ],
+          "texture": "#back",
+          "cullface": "south"
+        },
+        "east": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "frame_east",
+      "from": [
+        14,
+        2,
+        15
+      ],
+      "to": [
+        16,
+        14,
+        16
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            14,
+            2,
+            16,
+            14
+          ],
+          "texture": "#back",
+          "cullface": "south"
+        },
+        "west": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    }
+  ]
+}
