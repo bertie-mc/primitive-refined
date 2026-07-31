@@ -66,8 +66,18 @@ Refined Mods, which is MIT licensed:
 MIT permits this, provided the notice above travels with the files. It does.
 
 
-MALUM
+MALUM — ALL RIGHTS RESERVED
 
-The Soulstained Shaft's colour is matched to Malum's soul stained steel. Only
-the colour values were referenced; no Malum texture is copied, derived from, or
-shipped here, and Malum is not a dependency.
+Malum's mods.toml declares "All Rights Reserved".
+
+As a temporary placeholder, the Soulstained Shaft and the controller's shaft
+stubs reference
+
+  malum:block/storage_blocks/block_of_soul_stained_steel
+
+That is a path reference resolved by Minecraft at runtime — no Malum pixel is
+copied into or shipped with this jar, exactly as with Create's textures. It does
+mean Malum must be installed for the shaft to render; see README.
+
+This is placeholder art pending our own, and it must be replaced before any
+release that does not sit alongside Malum.

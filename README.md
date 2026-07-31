@@ -50,13 +50,13 @@ line, and so a later version can restrict which shafts carry a network.
 
 ## Assets
 
-**This mod ships no Create art.** Create's licence makes its `assets/` All Rights Reserved
-even though its code is MIT, so the models reference Create's texture *paths* and let
-Minecraft resolve them at runtime — a reference, not a redistribution. The shaft's colour
-is a runtime tint over Create's grey axis texture, not a recoloured copy of it.
+**This mod ships no third-party art at all.** Create's licence makes its `assets/` All
+Rights Reserved even though its code is MIT, and Malum is All Rights Reserved outright. So
+the models reference their texture *paths* and let Minecraft resolve them at runtime — a
+reference, not a redistribution.
 
-The only textures in the jar are the controller's two overlay layers, derived from Refined
-Storage's MIT purple controller cutout. See [NOTICE](NOTICE).
+The only textures in the jar are the controller's overlay layers, derived from Refined
+Storage's MIT controller cutout. See [NOTICE](NOTICE).
 
 ## Deployment status — the packs do not have this mod
 
