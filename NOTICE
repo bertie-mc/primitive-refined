@@ -3,14 +3,14 @@ SCOPE OF THE PUBLIC DOMAIN DEDICATION
 The dedication in UNLICENSE covers the original code in this repository.
 
 It does not, and cannot, cover third-party material that this project depends
-on or interoperates with — the Minecraft client, NeoForge, and any mod whose
+on or interoperates with - the Minecraft client, NeoForge, and any mod whose
 blocks, items or APIs are referenced here. Those remain under their own terms.
 
 Compile-time dependencies are resolved from public mavens (createmod.net,
 NeoForged, Modrinth) at build time. No third-party jar is committed.
 
 
-CREATE — CODE MIT, ASSETS ALL RIGHTS RESERVED
+CREATE - CODE MIT, ASSETS ALL RIGHTS RESERVED
 
 Create's licence splits: everything under its src/main/resources/assets/ is
 All Rights Reserved, and only the code is MIT. So this mod ships **no copy of
@@ -24,7 +24,7 @@ Create's texture *paths* and Minecraft resolves them at runtime:
   create:block/axis
   create:block/axis_top
 
-That is a reference, not a redistribution — nothing is copied into this jar,
+That is a reference, not a redistribution - nothing is copied into this jar,
 and Create is a required dependency in any case, so the paths always resolve.
 The Soulstained Shaft's colour is a runtime tint (a colour handler multiplying
 Create's grey axis texture), not a recoloured copy of the file.
@@ -33,7 +33,7 @@ The geometry in models/block/*.json is authored here from scratch rather than
 adapted from Create's model files, which are assets and therefore reserved.
 
 
-REFINED STORAGE — MIT
+REFINED STORAGE - MIT
 
   assets/primitive_refined/textures/block/p_controller_overlay.png
   assets/primitive_refined/textures/block/p_controller_overlay_off.png
@@ -66,7 +66,7 @@ Refined Mods, which is MIT licensed:
 MIT permits this, provided the notice above travels with the files. It does.
 
 
-MALUM � ALL RIGHTS RESERVED
+MALUM - ALL RIGHTS RESERVED
 
 Malum's mods.toml declares "All Rights Reserved".
 
@@ -75,7 +75,7 @@ stubs reference
 
   malum:block/storage_blocks/block_of_soul_stained_steel
 
-That is a path reference resolved by Minecraft at runtime � no Malum pixel is
+That is a path reference resolved by Minecraft at runtime - no Malum pixel is
 copied into or shipped with this jar, exactly as with Create's textures. It does
 mean Malum must be installed for the shaft to render; see README.
 
