@@ -58,6 +58,20 @@ is a runtime tint over Create's grey axis texture, not a recoloured copy of it.
 The only textures in the jar are the controller's two overlay layers, derived from Refined
 Storage's MIT purple controller cutout. See [NOTICE](NOTICE).
 
+## Deployment status — the packs do not have this mod
+
+`primitive_refined-0.1.0.jar` was copied by hand into the **s1 demo** Prism instance
+(`instances/s1 demo/.minecraft/mods/`) for testing. That is the only place it exists.
+
+It is **not** in `packs/s1-pack`, `packs/bertie-pack`, `packs/full-test-pack` or
+`packs/worldgen-pack`, and it cannot be until there is a GitHub Release to point
+`packwiz github add bertie-mc/primitive-refined` at. Loose jars must never go into
+`packs/*/mods/`.
+
+So: a fresh instance built from any pack will not have this mod, and the hand-placed jar
+will be wiped by the next pack sync of that instance. Closing the gap means creating the
+`bertie-mc` repo, tagging `v0.1.0`, and adding it to the pack from the release.
+
 ## Known gaps
 
 - **The Soulstained Shaft does not visibly spin.** It renders from its static block model;
