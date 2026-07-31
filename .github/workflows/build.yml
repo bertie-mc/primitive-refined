@@ -1,11 +1,5 @@
 name: Build and test
 
-# No client/server runtime jobs, unlike every other bertie mod. They boot the built jar
-# in a real game, and this mod declares Create as a *required* dependency - so without
-# Create present NeoForge stops at a missing-dependency screen and the job fails before
-# it has tested anything. bertie-ci's fixture catalogue has no Create entry yet. Adding
-# one there is the fix; it belongs in that repository, not this one.
-
 on:
   push:
     branches: ["main"]
@@ -17,4 +11,18 @@ permissions:
 
 jobs:
   build:
-    uses: bertie-mc/bertie-ci/.github/workflows/build-mod.yml@v3.1.0
+    uses: bertie-mc/bertie-ci/.github/workflows/build-mod.yml@v3.2.1
+
+  client:
+    needs: build
+    uses: bertie-mc/bertie-ci/.github/workflows/client.yml@v3.2.1
+    with:
+      artifact-name: ${{ needs.build.outputs.artifact-name }}
+      fixture: create
+
+  server:
+    needs: build
+    uses: bertie-mc/bertie-ci/.github/workflows/server.yml@v3.2.1
+    with:
+      artifact-name: ${{ needs.build.outputs.artifact-name }}
+      fixture: create

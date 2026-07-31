@@ -81,7 +81,7 @@ seen this project run `./gradlew build` successfully? If not, the dependency is 
 | | |
 |---|---|
 | Minecraft | **1.21.1** only |
-| Loader | **NeoForge 21.1.217** |
+| Loader | **NeoForge 21.1.233** |
 | ModDevGradle | **2.0.134** |
 | Gradle | **8.8** |
 | JDK | **21** |

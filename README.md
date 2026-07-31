@@ -125,13 +125,13 @@ Adding it is one `packwiz github add` in each, whenever those packs want it.
 
 ### CI
 
-`build.yml` and `release.yml`, both on `bertie-ci` v3.1.0, the same as every other bertie
-mod — **minus the client and server runtime jobs.** Those boot the jar in a real game, and
-Create is a required dependency here, so without Create present NeoForge stops at a
-missing-dependency screen and the job fails having tested nothing. `bertie-ci`'s fixture
-catalogue has no Create entry. Adding one there is the fix, and it belongs in that
-repository, not this one — until then this mod's CI proves that it *compiles* and nothing
-more.
+`build.yml` composes the independent `bertie-ci` v3.2.1 build, client world-join, and
+dedicated-server readiness jobs. Both runtime jobs install the shared, hash-pinned
+`create` fixture before loading this mod's built artifact. There are no unit-test or
+GameTest jobs because the repository does not yet contain either kind of test.
+
+`release.yml` composes the same build job with the artifact-only GitHub publisher, so a
+release never maintains or runs a second build recipe.
 
 ## The one mixin
 
