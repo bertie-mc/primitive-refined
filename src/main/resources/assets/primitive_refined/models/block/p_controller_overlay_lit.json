@@ -1,10 +1,12 @@
 {
-  "__comment": "Overlay layer only - running. Contains nothing but the pixels berlord asked to change: the two 5-pixel L's on the socket faces, and one 10x4 block in the middle of each wide face. Create's model underneath is untouched.",
+  "__comment": "Overlay layer only - running. Holds nothing but the pixels that change: two 5-pixel L's on the socket faces, and one solid 10x4 block on each wide face. Create's model underneath is used exactly as it ships.",
   "render_type": "cutout",
   "textures": {
     "ov_socket": "primitive_refined:block/p_controller_overlay_socket",
-    "ov_west": "primitive_refined:block/p_controller_overlay_west",
-    "ov_east": "primitive_refined:block/p_controller_overlay_east",
+    "ov_west_base": "primitive_refined:block/p_controller_overlay_west_base",
+    "ov_west_glow": "primitive_refined:block/p_controller_overlay_west_glow",
+    "ov_east_base": "primitive_refined:block/p_controller_overlay_east_base",
+    "ov_east_glow": "primitive_refined:block/p_controller_overlay_east_glow",
     "particle": "create:block/rotation_speed_controller"
   },
   "elements": [
@@ -65,7 +67,7 @@
       }
     },
     {
-      "name": "strip_west",
+      "name": "strip_west_base",
       "from": [
         0.99,
         4,
@@ -84,7 +86,31 @@
             15,
             16
           ],
-          "texture": "#ov_west",
+          "texture": "#ov_west_base"
+        }
+      }
+    },
+    {
+      "name": "strip_west_glow",
+      "from": [
+        0.98,
+        4,
+        1
+      ],
+      "to": [
+        0.98,
+        12,
+        15
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            1,
+            8,
+            15,
+            16
+          ],
+          "texture": "#ov_west_glow",
           "neoforge_data": {
             "block_light": 15,
             "sky_light": 15
@@ -93,7 +119,7 @@
       }
     },
     {
-      "name": "strip_east",
+      "name": "strip_east_base",
       "from": [
         15.01,
         4,
@@ -112,7 +138,31 @@
             15,
             16
           ],
-          "texture": "#ov_east",
+          "texture": "#ov_east_base"
+        }
+      }
+    },
+    {
+      "name": "strip_east_glow",
+      "from": [
+        15.02,
+        4,
+        1
+      ],
+      "to": [
+        15.02,
+        12,
+        15
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            1,
+            8,
+            15,
+            16
+          ],
+          "texture": "#ov_east_glow",
           "neoforge_data": {
             "block_light": 15,
             "sky_light": 15
