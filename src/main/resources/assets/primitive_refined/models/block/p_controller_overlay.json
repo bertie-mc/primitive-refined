@@ -1,0 +1,108 @@
+{
+  "__comment": "Overlay layer only - idle. Contains nothing but the pixels berlord asked to change: the two 5-pixel L's on the socket faces, and one 10x4 block in the middle of each wide face. Create's model underneath is untouched.",
+  "render_type": "cutout",
+  "textures": {
+    "ov_socket": "primitive_refined:block/p_controller_overlay_socket_off",
+    "ov_west": "primitive_refined:block/p_controller_overlay_west_off",
+    "ov_east": "primitive_refined:block/p_controller_overlay_east_off",
+    "particle": "create:block/rotation_speed_controller"
+  },
+  "elements": [
+    {
+      "name": "l_north",
+      "from": [
+        1,
+        4,
+        0.99
+      ],
+      "to": [
+        15,
+        12,
+        0.99
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            1,
+            0,
+            15,
+            8
+          ],
+          "texture": "#ov_socket"
+        }
+      }
+    },
+    {
+      "name": "l_south",
+      "from": [
+        1,
+        4,
+        15.01
+      ],
+      "to": [
+        15,
+        12,
+        15.01
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            1,
+            0,
+            15,
+            8
+          ],
+          "texture": "#ov_socket"
+        }
+      }
+    },
+    {
+      "name": "strip_west",
+      "from": [
+        0.99,
+        4,
+        1
+      ],
+      "to": [
+        0.99,
+        12,
+        15
+      ],
+      "faces": {
+        "west": {
+          "uv": [
+            1,
+            8,
+            15,
+            16
+          ],
+          "texture": "#ov_west"
+        }
+      }
+    },
+    {
+      "name": "strip_east",
+      "from": [
+        15.01,
+        4,
+        1
+      ],
+      "to": [
+        15.01,
+        12,
+        15
+      ],
+      "faces": {
+        "east": {
+          "uv": [
+            1,
+            8,
+            15,
+            16
+          ],
+          "texture": "#ov_east"
+        }
+      }
+    }
+  ]
+}

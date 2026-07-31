@@ -1,9 +1,12 @@
 {
-  "__comment": "The property is HorizontalAxisKineticBlock.HORIZONTAL_AXIS, which is BlockStateProperties.HORIZONTAL_AXIS - its serialized name is 'axis', NOT 'horizontal_axis'. Getting that wrong matches no variant at all and every state falls back to the missing model. Create's own rotation_speed_controller blockstate keys on 'axis' for the same reason. Model is authored for axis=z and rotated for x.",
-  "variants": {
-    "axis=z,lit=false": { "model": "primitive_refined:block/p_controller" },
-    "axis=z,lit=true":  { "model": "primitive_refined:block/p_controller_lit" },
-    "axis=x,lit=false": { "model": "primitive_refined:block/p_controller", "y": 90 },
-    "axis=x,lit=true":  { "model": "primitive_refined:block/p_controller_lit", "y": 90 }
-  }
+  "__comment": "Multipart, not variants, so Create's rotation_speed_controller model can be used EXACTLY as it ships - referenced by path, never copied - and our overlay is layered on top as a second model. A child model cannot add elements to its parent, so layering is the only way to leave Create's geometry untouched. Property is 'axis' (BlockStateProperties.HORIZONTAL_AXIS), not 'horizontal_axis'.",
+  "multipart": [
+    { "when": { "axis": "z" }, "apply": { "model": "create:block/rotation_speed_controller/block" } },
+    { "when": { "axis": "x" }, "apply": { "model": "create:block/rotation_speed_controller/block", "y": 90 } },
+
+    { "when": { "axis": "z", "lit": "false" }, "apply": { "model": "primitive_refined:block/p_controller_overlay" } },
+    { "when": { "axis": "x", "lit": "false" }, "apply": { "model": "primitive_refined:block/p_controller_overlay", "y": 90 } },
+    { "when": { "axis": "z", "lit": "true" },  "apply": { "model": "primitive_refined:block/p_controller_overlay_lit" } },
+    { "when": { "axis": "x", "lit": "true" },  "apply": { "model": "primitive_refined:block/p_controller_overlay_lit", "y": 90 } }
+  ]
 }

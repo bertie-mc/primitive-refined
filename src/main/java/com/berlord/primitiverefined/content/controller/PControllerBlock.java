@@ -1,20 +1,34 @@
 package com.berlord.primitiverefined.content.controller;
 
+import java.util.function.Predicate;
+
 import com.berlord.primitiverefined.PrRegistry;
 import com.simibubi.create.content.kinetics.base.HorizontalAxisKineticBlock;
 import com.simibubi.create.content.kinetics.base.IRotate;
+import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
 import com.simibubi.create.foundation.block.IBE;
 
+import net.createmod.catnip.placement.IPlacementHelper;
+import net.createmod.catnip.placement.PlacementHelpers;
+import net.createmod.catnip.placement.PlacementOffset;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
@@ -78,6 +92,59 @@ public class PControllerBlock extends HorizontalAxisKineticBlock implements IBE<
         }
         Direction.Axis cogAxis = ((IRotate) above.getBlock()).getRotationAxis(above);
         return !cogAxis.isVertical() && cogAxis != state.getValue(HORIZONTAL_AXIS);
+    }
+
+    // --- Cogwheel placement -----------------------------------------------------
+
+    private static final int PLACEMENT_HELPER_ID = PlacementHelpers.register(new CogwheelPlacementHelper());
+
+    /**
+     * Right-clicking the controller with a large cogwheel puts it on top, turned the right
+     * way.
+     *
+     * <p>Without this you cannot sensibly fit one: clicking the top face places the
+     * cogwheel on its default vertical axis, which
+     * {@link #hasValidCogwheelAbove} rejects, and clicking a side places it beside the
+     * block instead of above it. Create solves this for its own speed controller with a
+     * placement helper and so do we - it is the same interaction players already know.
+     */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+                                              Player player, InteractionHand hand, BlockHitResult ray) {
+        IPlacementHelper helper = PlacementHelpers.get(PLACEMENT_HELPER_ID);
+        if (helper.matchesItem(stack)) {
+            return helper.getOffset(player, level, state, pos, ray)
+                    .placeInWorld(level, (BlockItem) stack.getItem(), player, hand, ray);
+        }
+        return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    private static class CogwheelPlacementHelper implements IPlacementHelper {
+
+        @Override
+        public Predicate<ItemStack> getItemPredicate() {
+            return ICogWheel::isLargeCogItem;
+        }
+
+        @Override
+        public Predicate<BlockState> getStatePredicate() {
+            return state -> state.getBlock() instanceof PControllerBlock;
+        }
+
+        @Override
+        public PlacementOffset getOffset(Player player, Level level, BlockState state, BlockPos pos,
+                                         BlockHitResult ray) {
+            BlockPos above = pos.above();
+            if (!level.getBlockState(above).canBeReplaced()) {
+                return PlacementOffset.fail();
+            }
+            // Perpendicular to the controller, which is the only orientation that meshes.
+            Direction.Axis cogAxis = state.getValue(HORIZONTAL_AXIS) == Direction.Axis.X
+                    ? Direction.Axis.Z
+                    : Direction.Axis.X;
+            return PlacementOffset.success(above,
+                    placed -> placed.setValue(RotatedPillarKineticBlock.AXIS, cogAxis));
+        }
     }
 
     @Override
