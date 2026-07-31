@@ -36,13 +36,16 @@ public final class PrNode {
     private final AbstractNetworkNode node;
     private final NetworkNodeContainerProvider containers;
 
+    /** No mask has been read yet - not a possible value of one, which is 0 to 63. */
+    private static final int UNKNOWN = -1;
+
     /**
      * The set of faces this block was last connected across, as a six-bit mask. Comparing
      * it is how a topology change is noticed: connectivity here depends on the
      * <em>neighbours'</em> states, so our own block state changing is not the signal RS
      * assumes it is.
      */
-    private int connections = -1;
+    private int connections = UNKNOWN;
 
     private boolean joined;
 
@@ -83,7 +86,14 @@ public final class PrNode {
         }
         containers.initialize(level, () -> { });
         joined = true;
-        connections = currentConnections(level);
+        // Deliberately not currentConnections(level). This runs while the chunk's block
+        // entities are still being created, and asking the level for a neighbour's block
+        // entity there creates it, which runs its clearRemoved, which asks for its
+        // neighbours - one stack frame per block along a shaft line until the stack ends.
+        // The first lazy tick reads the mask instead, a second later at worst, in a level
+        // that has finished loading; because UNKNOWN matches no mask, that first read also
+        // pushes the topology into RS, which is what a load wants anyway.
+        connections = UNKNOWN;
     }
 
     /** From {@code BlockEntity#setRemoved} - broken, or unloaded with the chunk. */
