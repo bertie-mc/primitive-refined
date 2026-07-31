@@ -7,6 +7,7 @@ import com.simibubi.create.content.kinetics.simpleRelays.AbstractSimpleShaftBloc
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -31,6 +32,22 @@ public class SoulstainedShaftBlock extends AbstractSimpleShaftBlock {
 
     public SoulstainedShaftBlock(Properties properties) {
         super(properties);
+    }
+
+    /**
+     * Keeps the block out of the chunk mesh, so only the animated copy is drawn.
+     *
+     * <p>Otherwise the static model and the rotating one are both rendered in the same
+     * place - a shaft that spins and stands still at once. A 4x4 pole rotated 45 degrees
+     * does not contain its own unrotated corners, so the stationary one is plainly visible
+     * poking out of the moving one.
+     *
+     * <p>Both animated paths are covered, so nothing is left invisible: the Flywheel visual
+     * when the backend is on, and {@code KineticBlockEntityRenderer} when it is off.
+     */
+    @Override
+    protected RenderShape getRenderShape(BlockState state) {
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
