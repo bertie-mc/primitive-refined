@@ -54,21 +54,19 @@ line, and so a later version can restrict which shafts carry a network.
 
 ### Primitive Grid / Primitive Crafting Grid (`p_grid`, `p_crafting_grid`)
 
-A mechanical crafter body, rebuilt from Create's own element layout: two slabs with a gap
-at z 6-10 and four thin rims. That gap matters - `crafter_side` carries a 48-pixel
-transparent window at rows 6-9 which Create never samples, because its side UVs take rows
-0-6 and 10-16 only and the gap in the geometry is where the mechanism shows. Ours shows a
-cogwheel there. Refined Storage screen on the front, the sequenced gearshift's shaft face
-on the back. Rotation enters along the facing axis
-through that rear shaft, and the screen lights once the block is turning and the network
-is not overstressed - an overstressed network means the stress units are not actually
-being supplied, which is the unpowered case.
+Refined Storage screen on the front, the sequenced gearshift's shaft face on the back,
+mechanical crafter body. Rotation enters along the facing axis through the rear shaft, and
+the screen lights once the block is turning and the network is not overstressed - an
+overstressed network means the stress units are not actually being supplied, which is the
+unpowered case. They demand 5 and 10 stress.
 
-They demand 5 and 10 stress respectively.
+**Working:** the screen lights and unlights correctly.
 
-**Their Refined Storage behaviour is not implemented.** They are kinetic blocks with the
-right cost, appearance and lit state; they hold no items, open no GUI and join no storage
-network. That work needs the Primitive Cable to exist first.
+**The body is not finished.** See Known gaps - six separate faults, all in the model.
+
+**Their Refined Storage behaviour is not implemented.** They hold no items, open no GUI and
+join no storage network. RS's own grids need cables too, so this waits on the Primitive
+Cable; the intent is to mirror RS's design rather than invent one.
 
 ## Assets
 
@@ -112,12 +110,63 @@ quietly losing the connection.
 
 ## Known gaps
 
+### The grid body - six faults, confirmed in game
+
+Listed with the diagnosis, so the next attempt does not rediscover them.
+
+1. **The cog in the gap is a splatter of random lines.** `obsidiansteel_cogwheel.png` is
+   32x32 and is Create's cogwheel *atlas* - teeth strips laid out for the cogwheel model's
+   own uvs, not a tileable surface. Mapping `uv [1,1,15,15]` of it onto a plain box is
+   meaningless. A cog there needs Create's cogwheel geometry, not its texture on a cube.
+2. **Side faces are stretched.** The slab side faces are 6 wide (z) by 16 tall (y), but
+   carry `uv [0,0,16,6]` - 16 by 6. The region is transposed relative to the face. Those
+   uvs were transcribed from Create's element list without allowing for the fact that our
+   element set differs.
+3. **The back is a flat projection of the gearshift face.** The real thing has depth: two
+   rings of perimeter, the cog part as the furthest pixels, everything else one deep. It
+   needs recessed geometry, not a texture on a flat face.
+4. **The rear shaft sticks out** - a consequence of 3. With no recess, the
+   `[6,6,16]->[10,10,17]` stub protrudes instead of sitting in the well.
+5. **The rear shaft does not rotate.** No Flywheel visual or block entity renderer is
+   registered for `P_GRID_BE`. Needs the same treatment the Soulstained Shaft got: a
+   `PartialModel` plus `SingleAxisRotatingVisual`.
+6. **Cogwheels cannot attach.** `PGridBlock.hasShaftTowards` returns true only for the back
+   face and the block is not an `ICogWheel`, so nothing meshes against its sides.
+
+Possibly not a fault: **shafts placed on the ground look slightly rotated.** Create applies
+a per-position rotation offset (`getRotationAngleOffset`) so neighbouring shafts look
+continuous, and `SingleAxisRotatingVisual` honours it. Create's own shafts do the same.
+Compare ours against a Create shaft at rest before changing anything.
+
+### Elsewhere
+
 - **With Flywheel's backend off, the controller's shaft stubs do not render at all.** They
   are drawn only by a Flywheel visual; unlike the shaft, no block entity renderer fallback
   is registered for them, because a fallback would have to place and orient the stubs by
-  hand through `CachedBuffers.partial` and that path is untested. The body and everything
-  else is unaffected.
-- **No recipes.** Both blocks are creative-tab only so far.
+  hand through `CachedBuffers.partial` and that path is untested.
+- **No recipes.** Everything is creative-tab only.
+
+## Previewing models without launching the game
+
+Two rounds of grid work shipped blind because the local previewer could not resolve
+Create's textures - assets had been extracted file-by-file, so whatever had not been needed
+before was missing. Do not do that. **Extract each mod's assets whole, once**, from the
+jars pinned in this pack, and render against that.
+
+`unzip` with a wildcard is unreliable here; on MSYS it extracted directory entries and no
+files even with `MSYS2_ARG_CONV_EXCL` set. Python's `zipfile` works.
+
+A crude isometric previewer - axis-aligned boxes with per-face uvs, which is all these
+models use - is enough to catch stretched faces, wrong uv regions and see-through geometry.
+It reproduced all of the grid faults above without a game launch.
+
+## The crafter_side trap
+
+`create:block/crafter_side` has a **48-pixel transparent window** at cols 2-13, rows 6-9.
+Create never samples it: its side uvs take rows 0-6 on the front slab and rows 10-16 on the
+back one, and the gap between them - z 6 to 10 - is a real hole in the geometry where the
+mechanism shows. Stretch the whole texture over one 0-16 cube and the block is
+see-through. This cost a round; it is why the body is built as two slabs and four rims.
 
 ## Verified in game
 
@@ -126,5 +175,9 @@ goggle readout reports every lit condition, it takes power both through its hori
 shaft line and from a large cogwheel above (the mixin), it drives that cogwheel, and the
 Soulstained Shaft relays force and spins.
 
-Not yet verified: the controller's shaft stubs spinning (added last, untested), and
+Also confirmed: the grids light when powered, and our cogwheels place correctly onto a
+large cogwheel (they did not before - the item must be Create's `CogwheelBlockItem`, whose
+`onItemUseFirst` does the meshing; a plain `BlockItem` shows the ghost but places flat).
+
+Not verified: the controller's shaft stubs spinning, the restored controller glow, and
 anything with Flywheel's backend switched off.
