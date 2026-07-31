@@ -81,6 +81,15 @@ public final class PrRegistry {
         return BlockBehaviour.Properties.of()
                 .mapColor(MapColor.TERRACOTTA_YELLOW)
                 .sound(SoundType.METAL)
+                // Without this the shaft and the cogwheel render pitch black. They are
+                // Flywheel instances, and an instance is lit from the light value at the
+                // block's *own* position; an occluding block blocks light, so that value
+                // is zero. The body looks fine either way, because chunk-mesh faces are
+                // lit from the neighbouring position instead - which is exactly what
+                // makes this look like a texture fault rather than a lighting one.
+                // Correct on its own terms too: the rims have a see-through window and
+                // the back is recessed, so this was never a solid cube.
+                .noOcclusion()
                 .strength(2.0F);
     }
 

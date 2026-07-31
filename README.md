@@ -221,6 +221,23 @@ What it will not tell you: anything drawn by a block entity renderer or a Flywhe
 which for the grids is the shaft and the cogwheel. To look at those, render
 `block/p_grid_kinetics.json` on its own, or merge its elements into the body by hand.
 
+## The occlusion trap — why instanced parts render black
+
+A Flywheel instance is lit from the light value at the **block's own position**. A block
+that occludes blocks light, so that value is zero, so anything drawn as an instance comes
+out pitch black. The block's body is unaffected, because chunk-mesh faces take their light
+from the neighbouring position instead — which is what makes this present as a texture or
+material fault when it is neither.
+
+The grids shipped in `v0.1.0` with exactly this: `gridProperties()` was the one set of
+block properties in the mod without `.noOcclusion()`, and the grids were the only blocks
+whose shaft and cogwheel were black. Every other block here that draws an instance — the
+controller, the Soulstained Shaft, the whole cogwheel family — had always set it.
+
+So: **any block with a Flywheel visual needs `.noOcclusion()`.** For these it is right
+anyway; the rims have a see-through window and the back is recessed, so it was never a
+solid cube.
+
 ## The crafter_side trap
 
 `create:block/crafter_side` has a **48-pixel transparent window** at cols 2-13, rows 6-9.
