@@ -302,156 +302,24 @@
       }
     },
     {
-      "name": "back_well",
+      "name": "back_plate",
       "from": [
-        4,
-        4,
+        2,
+        2,
         10
       ],
       "to": [
-        12,
-        12,
-        13
-      ],
-      "faces": {
-        "south": {
-          "uv": [
-            4,
-            4,
-            12,
-            12
-          ],
-          "texture": "#back"
-        }
-      }
-    },
-    {
-      "name": "mid_bottom",
-      "from": [
-        2,
-        2,
-        13
-      ],
-      "to": [
         14,
-        4,
+        14,
         15
       ],
       "faces": {
         "south": {
           "uv": [
             2,
-            12,
+            2,
             14,
             14
-          ],
-          "texture": "#back"
-        },
-        "up": {
-          "uv": [
-            2,
-            2,
-            3,
-            3
-          ],
-          "texture": "#back"
-        }
-      }
-    },
-    {
-      "name": "mid_top",
-      "from": [
-        2,
-        12,
-        13
-      ],
-      "to": [
-        14,
-        14,
-        15
-      ],
-      "faces": {
-        "south": {
-          "uv": [
-            2,
-            2,
-            14,
-            4
-          ],
-          "texture": "#back"
-        },
-        "down": {
-          "uv": [
-            2,
-            2,
-            3,
-            3
-          ],
-          "texture": "#back"
-        }
-      }
-    },
-    {
-      "name": "mid_west",
-      "from": [
-        2,
-        4,
-        13
-      ],
-      "to": [
-        4,
-        12,
-        15
-      ],
-      "faces": {
-        "south": {
-          "uv": [
-            2,
-            4,
-            4,
-            12
-          ],
-          "texture": "#back"
-        },
-        "east": {
-          "uv": [
-            2,
-            2,
-            3,
-            3
-          ],
-          "texture": "#back"
-        }
-      }
-    },
-    {
-      "name": "mid_east",
-      "from": [
-        12,
-        4,
-        13
-      ],
-      "to": [
-        14,
-        12,
-        15
-      ],
-      "faces": {
-        "south": {
-          "uv": [
-            12,
-            4,
-            14,
-            12
-          ],
-          "texture": "#back"
-        },
-        "west": {
-          "uv": [
-            2,
-            2,
-            3,
-            3
           ],
           "texture": "#back"
         }

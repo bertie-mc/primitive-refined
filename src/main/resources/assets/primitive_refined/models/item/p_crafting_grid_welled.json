@@ -1,9 +1,9 @@
 {
-  "__comment": "The item cannot parent block/p_grid any more: the shaft and the cogwheel are drawn by a Flywheel visual, which only exists for a placed block entity, so an item that inherited the block model would be missing both. Create's own crafter item does the same thing - it bakes cogwheel_shaftless into the item model. Body and kinetics are merged here, with the kinetics uvs halved because this model keeps the body's 16-wide uv space rather than the cogwheel atlas's 32.",
+  "__comment": "The item cannot parent block/p_grid any more: the shaft and the cogwheel are drawn by a Flywheel visual, which only exists for a placed block entity, so an item that inherited the block model would be missing both. Create's own crafter item does the same thing - it bakes cogwheel_shaftless into the item model. Body and kinetics are merged here, with the kinetics uvs halved because this model keeps the body's 16-wide uv space rather than the cogwheel atlas's 32. THIS IS THE ALTERNATIVE BACK: the shaft sunk in a three-pixel well instead of standing flush. It exists only so the two can be compared in game; one of them is to be deleted.",
   "parent": "block/block",
   "render_type": "cutout",
   "textures": {
-    "front": "primitive_refined:block/p_grid_front_off",
+    "front": "primitive_refined:block/p_crafting_grid_front_off",
     "back": "primitive_refined:block/p_grid_back",
     "side": "create:block/crafter_side",
     "inner_front": "create:block/brass_block",
@@ -302,11 +302,68 @@
       }
     },
     {
-      "name": "back_plate",
+      "name": "back_well",
+      "from": [
+        4,
+        4,
+        10
+      ],
+      "to": [
+        12,
+        12,
+        13
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            4,
+            4,
+            12,
+            12
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "mid_bottom",
       "from": [
         2,
         2,
-        10
+        13
+      ],
+      "to": [
+        14,
+        4,
+        15
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            2,
+            12,
+            14,
+            14
+          ],
+          "texture": "#back"
+        },
+        "up": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "mid_top",
+      "from": [
+        2,
+        12,
+        13
       ],
       "to": [
         14,
@@ -319,7 +376,82 @@
             2,
             2,
             14,
-            14
+            4
+          ],
+          "texture": "#back"
+        },
+        "down": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "mid_west",
+      "from": [
+        2,
+        4,
+        13
+      ],
+      "to": [
+        4,
+        12,
+        15
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            2,
+            4,
+            4,
+            12
+          ],
+          "texture": "#back"
+        },
+        "east": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "texture": "#back"
+        }
+      }
+    },
+    {
+      "name": "mid_east",
+      "from": [
+        12,
+        4,
+        13
+      ],
+      "to": [
+        14,
+        12,
+        15
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            12,
+            4,
+            14,
+            12
+          ],
+          "texture": "#back"
+        },
+        "west": {
+          "uv": [
+            2,
+            2,
+            3,
+            3
           ],
           "texture": "#back"
         }

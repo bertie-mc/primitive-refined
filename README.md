@@ -63,11 +63,24 @@ supplied, which is the unpowered case. They demand 5 and 10 stress.
 The body follows Create's mechanical crafter element for element: two slabs with a gap at
 z 6-10 and four thin rims. Every `crafter_side` face carries **Create's own face
 `rotation`** — without it a 16x6 uv region lands transposed on a 6x16 face and every side
-of the block stretches. The back is the gearbox face at three depths: the two-pixel
-perimeter at the block surface, the plate one pixel in, the cogwheel well three in. Each
-step is a picture frame of four bars — full-width top and bottom, inset sides — because
-that is the arrangement in which no two faces are ever coplanar, and coplanar is what
-z-fights.
+of the block stretches.
+
+The back is the gearbox face at **two depths only**: the two-pixel perimeter and the
+shaft's 4x4 sit at the block face, everything between them is one pixel in. The perimeter
+is a picture frame of four bars — full-width top and bottom, inset sides — because that is
+the arrangement in which no two faces are ever coplanar, and coplanar is what z-fights.
+The plate behind runs across the shaft's square as well, so with the shaft's visual absent
+that square reads as the dark hole the texture already draws there, not as a hole through
+the block.
+
+### Two backs, pending a decision
+
+`p_grid_welled` and `p_crafting_grid_welled` are the same blocks with the shaft sunk in a
+three-pixel well instead — a first attempt at reading the gearbox face, kept only so both
+can be placed side by side in game. **One of the two sets is to be deleted** once berlord
+picks: its models, blockstates, loot tables, lang entries and registry lines. They share
+the plain grids' block entity types on purpose, so nothing else in the mod knows they
+exist.
 
 The shaft and the cogwheel turn, so they are **not in the block model at all**. They live
 in `block/p_grid_kinetics` and are drawn by the block entity's Flywheel visual. A visual
@@ -143,6 +156,9 @@ What *has* been checked, short of launching: the mod builds; no two faces in the
 model are coplanar and overlapping (the z-fighting case, checked by script); and the
 previewer that produced it renders Create's own `mechanical_crafter` correctly, which is
 the model that exercises uv rotation on all six faces.
+
+There is also an open decision: the two backs above ship side by side, and one set has to
+go once it has been looked at.
 
 The one to look at hardest is the visual. `SingleAxisRotatingVisual` — what the controller
 and the shaft use — turns the model onto the rotation *axis*, and an axis has no sign, so
