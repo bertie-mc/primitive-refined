@@ -1,5 +1,9 @@
 # Primitive Refined
 
+> [!IMPORTANT]
+> Development has moved to the [`bertie` monorepo](https://github.com/bertie-mc/bertie/tree/main/mods/primitive-refined).
+> This repository is retained read-only for historical tags, releases, and issues.
+
 Primitive Refined is an early-game, Create-powered storage network for NeoForge 1.21.1.
 It uses Refined Storage’s network and grid implementations, but replaces FE power and RS
 cables with a dedicated family of Create kinetics: the shafts and cogs that carry rotation
