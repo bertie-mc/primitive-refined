@@ -155,7 +155,7 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
             loadStorage(serverLevel, state);
         }
 
-        refreshDiagnosis(serverLevel, state);
+        refreshReadout(serverLevel, state);
 
         boolean shouldBeLit = node.isActive();
         if (state.getValue(ExternalReaderBlock.LIT) != shouldBeLit) {
@@ -170,11 +170,10 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
      * <p>The readout has to be computed here and shipped, not computed where it is drawn.
      * Create's goggle tooltip is a client HUD: on that side the network does not exist,
      * because a primitive network is only ever built server-side, and a chest's contents
-     * are not there either. Asking those questions in {@code addToGoggleTooltip} answers
-     * about the client's empty copy of the world, which is worse than not asking - it looks
-     * like a diagnosis and is not one.
+     * are not there either. Asking those questions in {@code addToGoggleTooltip} would read
+     * the client's empty copy of the world and display incorrect state.
      */
-    private void refreshDiagnosis(ServerLevel serverLevel, BlockState state) {
+    private void refreshReadout(ServerLevel serverLevel, BlockState state) {
         Direction side = state.getValue(ExternalReaderBlock.HORIZONTAL_FACING).getOpposite();
         IItemHandler handler = serverLevel.getCapability(
                 Capabilities.ItemHandler.BLOCK, targetPos(state), side);
