@@ -36,12 +36,12 @@ go away.
 Compile dependencies are resolved from **public mavens** — createmod.net, Modrinth,
 NeoForged. They are never committed and never read from a local directory.
 
-```gradle
+```kotlin
 repositories {
-    maven { url = "https://maven.createmod.net" }
+    maven { url = uri("https://maven.createmod.net") }
 }
 dependencies {
-    compileOnly("com.simibubi.create:create-1.21.1:${create_version}:slim") { transitive = false }
+    compileOnly("com.simibubi.create:create-1.21.1:${create_version}:slim") { isTransitive = false }
 }
 ```
 
@@ -59,20 +59,20 @@ Note that `maven.createmod.net` versions Create per CI build, so the Modrinth re
 
 If you need another **bertie** mod on the classpath, take it from its GitHub Release:
 
-```gradle
+```kotlin
 repositories {
     ivy {
-        url = "https://github.com/bertie-mc"
-        patternLayout { artifact "/[organisation]/releases/download/v[revision]/[module]-[revision].jar" }
+        url = uri("https://github.com/bertie-mc")
+        patternLayout { artifact("/[organisation]/releases/download/v[revision]/[module]-[revision].jar") }
         metadataSources { artifact() }
-        content { includeGroup "bertie-progression" }
+        content { includeGroup("bertie-progression") }
     }
 }
-dependencies { compileOnly "bertie-progression:bertie-progression:0.25.1" }
+dependencies { compileOnly("bertie-progression:bertie-progression:0.25.1") }
 ```
 
 **Test for whether you got it right:** could a fresh clone on a machine that has never
-seen this project run `./gradlew build` successfully? If not, the dependency is wrong.
+seen this project run `gradle build` successfully? If not, the dependency is wrong.
 
 ---
 
@@ -83,11 +83,11 @@ seen this project run `./gradlew build` successfully? If not, the dependency is 
 | Minecraft | **1.21.1** only |
 | Loader | **NeoForge 21.1.233** |
 | ModDevGradle | **2.0.134** |
-| Gradle | **8.8** |
+| Gradle | **8.14.4** (Nixpkgs `gradle_8`) |
 | JDK | **21** |
 
 These are pinned across every bertie mod and move in lockstep or not at all. Dependabot
-is configured to ignore them for exactly this reason. Do not bump the Gradle wrapper,
+is configured to ignore them for exactly this reason. Do not change the Gradle major or Nixpkgs pin,
 ModDevGradle, or the Minecraft/NeoForge version as a side effect of another task.
 
 **Minecraft-ecosystem version strings are not semver.** `maven.modrinth:*`,
@@ -211,7 +211,7 @@ If you are unsure whether something is redistributable, do not add it — ask.
 [ ] committed with a conventional-commit message
 [ ] rebased on origin/main and pushed
 [ ] git worktree list shows only the main checkout
-[ ] ./gradlew build passes, or the failure is reported
+[ ] gradle build passes, or the failure is reported
 [ ] no jar committed, no libs/ dependency introduced
 [ ] any third-party asset added is recorded in NOTICE
 [ ] if released: tag pushed and the release workflow went green
