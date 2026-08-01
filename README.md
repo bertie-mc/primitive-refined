@@ -365,21 +365,37 @@ The only guard `compositeInsert` has that `compositeExtract` does not is
 empty set, which allows everything. `AccessMode` defaults to `INSERT_EXTRACT`. Nothing was
 logged.
 
-That leaves the target block rather than the code, and the goggle readout added in 0.2.1
-answers it in one look — it reports the block in front, whether that block hands out an
-item handler on the face the reader touches, **how many of its slots are empty**, and
-whether the node is on a live network. A chest filled with test items has nowhere to put a
-new one, and would behave exactly as reported.
+Also checked and identical to RS's own: both packet handlers dispatch on the **interface**
+(`GridInsertionStrategy` / `GridExtractionStrategy`), not on RS's concrete menu class; the
+server-side menu is built by the same protected constructor and gets its strategies from
+the same `initStrategies`; and `MenuOpenerImpl` opens an `ExtendedMenuProvider` with exactly
+the `serverPlayer.openMenu(provider, buf -> codec.encode(...))` this mod uses. **There is no
+structural difference left between our grid and RS's.** The difference is in state.
 
-Remaining suspects, in order:
+So 0.2.2 asks the block instead of reading more bytecode. The External Reader's goggle
+readout now performs a **simulated insert of one stone at the root storage** — the same call
+`TransferHelper` makes on a player's behalf — and reports the answer, alongside the target's
+slot and empty-slot counts. That splits the problem in half:
 
-1. **The target was full**, or exposes no item handler on that face.
-2. **`detectChanges()` runs every tick** here where RS rate-limits its own against an
-   adaptive work rate. It should be idempotent, so this is a performance deviation rather
-   than a correctness one - but it is a deviation, and it is in the path an insert takes.
-3. Something about the menu's slots that only shift-clicking exercises. Worth knowing
-   whether the failure was a cursor click into the grid, a shift-click from the inventory,
-   or both.
+| Readout | Where the fault is |
+| --- | --- |
+| `empty: 0` | The chest is full. Not a bug. |
+| would accept **yes** | The storage is willing; the fault is between the grid and it. |
+| would accept **no**, with empty slots | The storage refuses; the fault is in the reader or the network. |
+
+### The 0.2.1 readout answered about the wrong world
+
+Worth recording because it is a trap this mod will meet again: **Create's goggle tooltip is
+a client HUD.** `addToGoggleTooltip` runs on the client, where a primitive network does not
+exist — it is only ever built server-side — and where a chest's contents are not present
+either. The readout added in 0.2.1 asked its questions there, so it reported an absent
+network and an empty inventory with total confidence. That is worse than no readout.
+
+0.2.2 computes the diagnosis on the server in the lazy tick and ships it through
+`write`/`read` with `sendData()`, which is how Create syncs block entity state for goggles.
+The controller's network demand had the same fault — it was a server-only field being read
+on the client, showing `0.0 su` regardless — and is now synced the same way, along with its
+controller count.
 
 ### The External Reader's inventory face is a coin-flip that was flipped one way
 

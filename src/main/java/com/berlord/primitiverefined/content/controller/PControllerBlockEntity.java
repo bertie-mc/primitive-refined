@@ -15,6 +15,8 @@ import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -31,8 +33,18 @@ public class PControllerBlockEntity extends KineticBlockEntity implements PrNode
 
     private final PrNode node = new PrNode(this, new PrControllerNode(), "primitive_controller");
 
-    /** The network's total cost, for the goggle readout. Never charged - see {@link PrStress}. */
+    /**
+     * The network's total cost, for the goggle readout. Never charged - see {@link PrStress}.
+     *
+     * <p>Computed on the server and shipped, along with {@link #controllers}, because
+     * Create's goggle tooltip is a client HUD and a primitive network is only ever built
+     * server-side. Asked on the client, both questions answer about a network that does not
+     * exist there - which looks like a readout and is not one.
+     */
     private float demand = PrStress.CONTROLLER;
+
+    /** How many controllers this network has. One is the only working answer. */
+    private int controllers;
 
     public PControllerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -102,7 +114,15 @@ public class PControllerBlockEntity extends KineticBlockEntity implements PrNode
 
         boolean powered = PrNodes.isPowered(this);
         node.refresh(powered);
-        demand = PrStress.networkDemand(node.network());
+
+        Network network = node.network();
+        float newDemand = PrStress.networkDemand(network);
+        int newControllers = network == null ? 0 : PrNode.controllerCount(network);
+        if (newDemand != demand || newControllers != controllers) {
+            demand = newDemand;
+            controllers = newControllers;
+            sendData();
+        }
 
         BlockState state = getBlockState();
         if (!(state.getBlock() instanceof PControllerBlock)) {
@@ -199,8 +219,6 @@ public class PControllerBlockEntity extends KineticBlockEntity implements PrNode
         line(tooltip, "speed", getSpeed() != 0, String.format("%.1f rpm", getSpeed()));
         line(tooltip, "not overstressed", !isOverStressed(), isOverStressed() ? "overstressed" : "ok");
 
-        Network network = node.network();
-        int controllers = network == null ? 0 : PrNode.controllerCount(network);
         line(tooltip, "controllers on network", controllers == 1,
                 controllers == 0 ? "none - not on a network"
                         : controllers == 1 ? "1" : controllers + " - a system takes one");
@@ -210,6 +228,20 @@ public class PControllerBlockEntity extends KineticBlockEntity implements PrNode
                     state.getValue(PControllerBlock.LIT) ? "on" : "off");
         }
         return true;
+    }
+
+    @Override
+    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        super.write(tag, registries, clientPacket);
+        tag.putFloat("Demand", demand);
+        tag.putInt("Controllers", controllers);
+    }
+
+    @Override
+    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        super.read(tag, registries, clientPacket);
+        demand = tag.getFloat("Demand");
+        controllers = tag.getInt("Controllers");
     }
 
     private static void line(List<Component> tooltip, String label, boolean ok, String detail) {

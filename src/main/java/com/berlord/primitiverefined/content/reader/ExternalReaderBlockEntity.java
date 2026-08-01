@@ -10,21 +10,29 @@ import com.berlord.primitiverefined.network.PrNode;
 import com.berlord.primitiverefined.network.PrNodeHost;
 import com.berlord.primitiverefined.network.PrNodes;
 import com.refinedmods.refinedstorage.api.core.Action;
+import com.refinedmods.refinedstorage.api.network.Network;
 import com.refinedmods.refinedstorage.api.network.impl.node.externalstorage.ExternalStorageNetworkNode;
+import com.refinedmods.refinedstorage.api.network.storage.StorageNetworkComponent;
 import com.refinedmods.refinedstorage.api.resource.ResourceAmount;
 import com.refinedmods.refinedstorage.api.resource.ResourceKey;
 import com.refinedmods.refinedstorage.api.storage.Actor;
 import com.refinedmods.refinedstorage.api.storage.external.ExternalStorageProvider;
 import com.refinedmods.refinedstorage.api.storage.tracked.InMemoryTrackedStorageRepository;
 import com.refinedmods.refinedstorage.common.api.RefinedStorageApi;
+import com.refinedmods.refinedstorage.common.api.storage.PlayerActor;
 import com.refinedmods.refinedstorage.common.api.storage.externalstorage.ExternalStorageProviderFactory;
+import com.refinedmods.refinedstorage.common.support.resource.ItemResource;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -57,6 +65,13 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
 
     /** The block last resolved a provider from, so a chest swapped for a barrel is noticed. */
     private BlockState observedTarget;
+
+    // --- Diagnosis, computed on the server and shipped to the goggles ------------
+    /** Slots in the target's item handler, or -1 if it has none on the face we touch. */
+    private int targetSlots = -1;
+    private int targetEmptySlots;
+    /** Whether the network would take a resource it does not already hold. */
+    private boolean networkAccepts;
 
     public ExternalReaderBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -140,10 +155,75 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
             loadStorage(serverLevel, state);
         }
 
+        refreshDiagnosis(serverLevel, state);
+
         boolean shouldBeLit = node.isActive();
         if (state.getValue(ExternalReaderBlock.LIT) != shouldBeLit) {
             KineticBlockEntity.switchToBlockState(level, worldPosition,
                     state.setValue(ExternalReaderBlock.LIT, shouldBeLit));
+        }
+    }
+
+    /**
+     * Re-reads what the block can see and sends it to the client if it moved.
+     *
+     * <p>The readout has to be computed here and shipped, not computed where it is drawn.
+     * Create's goggle tooltip is a client HUD: on that side the network does not exist,
+     * because a primitive network is only ever built server-side, and a chest's contents
+     * are not there either. Asking those questions in {@code addToGoggleTooltip} answers
+     * about the client's empty copy of the world, which is worse than not asking - it looks
+     * like a diagnosis and is not one.
+     */
+    private void refreshDiagnosis(ServerLevel serverLevel, BlockState state) {
+        Direction side = state.getValue(ExternalReaderBlock.HORIZONTAL_FACING).getOpposite();
+        IItemHandler handler = serverLevel.getCapability(
+                Capabilities.ItemHandler.BLOCK, targetPos(state), side);
+
+        int slots = handler == null ? -1 : handler.getSlots();
+        int empty = 0;
+        if (handler != null) {
+            for (int slot = 0; slot < handler.getSlots(); slot++) {
+                if (handler.getStackInSlot(slot).isEmpty()) {
+                    empty++;
+                }
+            }
+        }
+        boolean accepts = probeInsert();
+
+        if (slots != targetSlots || empty != targetEmptySlots || accepts != networkAccepts) {
+            targetSlots = slots;
+            targetEmptySlots = empty;
+            networkAccepts = accepts;
+            sendData();
+        }
+    }
+
+    /**
+     * Asks the network, for real, whether it would take one more item.
+     *
+     * <p>"The grid will not accept items" has two halves that look identical from outside:
+     * either the storage refuses, or the menu never gets as far as asking it. Every link
+     * between the grid's insert and this block's chest was read out of Refined Storage's
+     * own bytecode and found to be the same code RS's own grid runs, so the answer is in
+     * state that reading does not reach. This asks.
+     *
+     * <p>A <b>simulated</b> insert of one stone at the root storage - the same call
+     * {@code TransferHelper} makes on the player's behalf. Stone rather than something the
+     * chest already holds, because "will you take a resource you do not already have" is
+     * the case that fails when a chest is full of full stacks. Simulated, so looking costs
+     * nothing and changes nothing.
+     */
+    private boolean probeInsert() {
+        Network network = node.network();
+        if (network == null) {
+            return false;
+        }
+        try {
+            return network.getComponent(StorageNetworkComponent.class).insert(
+                    ItemResource.ofItemStack(new ItemStack(Items.STONE)), 1,
+                    Action.SIMULATE, new PlayerActor("goggles")) > 0;
+        } catch (RuntimeException e) {
+            return false;
         }
     }
 
@@ -197,32 +277,37 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
             return true;
         }
 
-        Direction facing = state.getValue(ExternalReaderBlock.HORIZONTAL_FACING);
-        BlockPos target = targetPos(state);
-        BlockState targetState = level.getBlockState(target);
-        IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK, target, facing.getOpposite());
+        BlockState targetState = level.getBlockState(targetPos(state));
 
         tooltip.add(Component.literal(" ").append(
                 Component.literal("External Reader").withStyle(ChatFormatting.GRAY)));
         line(tooltip, "reading", !targetState.isAir(),
                 targetState.isAir() ? "nothing in front" : targetState.getBlock().getName().getString());
-        if (handler == null) {
-            line(tooltip, "item handler", false, "none on the " + facing.getOpposite() + " face");
-        } else {
-            int free = 0;
-            for (int slot = 0; slot < handler.getSlots(); slot++) {
-                if (handler.getStackInSlot(slot).isEmpty()) {
-                    free++;
-                }
-            }
-            line(tooltip, "item handler", true, handler.getSlots() + " slots, " + free + " empty");
-        }
+        line(tooltip, "item handler", targetSlots >= 0,
+                targetSlots < 0 ? "none on the face this touches"
+                        : targetSlots + " slots, " + targetEmptySlots + " empty");
         line(tooltip, "turning", getSpeed() != 0, String.format("%.1f rpm", getSpeed()));
         line(tooltip, "not overstressed", !isOverStressed(), isOverStressed() ? "overstressed" : "ok");
-        line(tooltip, "on a live network", node.isActive(),
-                node.network() == null ? "no network"
-                        : node.hasExactlyOneController() ? "yes" : "controller count is not 1");
+        line(tooltip, "would accept 1 stone", networkAccepts,
+                networkAccepts ? "yes - the storage is willing"
+                        : "no - nothing on this network will take it");
         return true;
+    }
+
+    @Override
+    protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        super.write(tag, registries, clientPacket);
+        tag.putInt("TargetSlots", targetSlots);
+        tag.putInt("TargetEmptySlots", targetEmptySlots);
+        tag.putBoolean("NetworkAccepts", networkAccepts);
+    }
+
+    @Override
+    protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
+        super.read(tag, registries, clientPacket);
+        targetSlots = tag.contains("TargetSlots") ? tag.getInt("TargetSlots") : -1;
+        targetEmptySlots = tag.getInt("TargetEmptySlots");
+        networkAccepts = tag.getBoolean("NetworkAccepts");
     }
 
     private static void line(List<Component> tooltip, String label, boolean ok, String detail) {
