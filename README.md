@@ -325,104 +325,67 @@ quietly losing the connection.
 
 ## Known gaps
 
-### The whole storage layer is unverified in game
+### Settled: inserting into the grid — the server's menu had no slots
 
-Everything in "How a network works", "Arcanetic parts do not mesh with Create's" and the
-grid and reader sections above **compiles and has never been run.** No client has been
-launched against it. It is written against Refined Storage 2.0.9's API as read out of the
-jar with `javap`, which gives signatures and bytecode but not intent, so the places to look
-first are the ones where intent mattered:
-
-- **Does a network form at all?** The one load-bearing assumption is that RS resolves a
-  node through the `NetworkNodeContainerProvider` **block capability**
-  (`RefinedStorageNeoForgeApi.INSTANCE.getNetworkNodeContainerProviderCapability()`) rather
-  than through an `instanceof` on its own base class. That is what lets a Create
-  `KineticBlockEntity` be an RS node at all — Java has one superclass to give and Create has
-  it. If nothing connects, this is why.
-- **Do the grid screens open, and do sorting, search and shift-click work?** They are RS's
-  screens under menu types this mod registers, opened with NeoForge's extended screen data
-  and `GridData.STREAM_CODEC`.
-- **Does the crafting grid craft?** `startExtractTransaction`'s boolean was read off RS's
-  bytecode and is **the opposite way round to the obvious guess** — true is direct commit,
-  false is snapshot. If crafting duplicates or eats ingredients, start there.
-- **Does the External Reader see a chest?** And on the face intended — see below.
-- **Does a cross-family placement actually pop?** And, more importantly, does a
-  *same*-family one not: the veto runs inside `getRotationSpeedModifier`, on every
-  propagation in the world, so a false positive would break Create itself.
-- **Two controllers on one network** should darken everything and say so through the
-  goggles.
-
-### Inserting into the grid: the server menu had no slots
-
-**Found in 0.2.3, after the reader's probe ruled out the storage.** The probe reported a
-chest with 27 empty slots, a live network, and *"would accept 1 stone: yes"* — so
-`rootStorage.insert` worked and the fault was above it.
+**Fixed in 0.2.3, root-caused and verified in game in 0.2.4.** Extraction worked from the
+first build; insertion never did.
 
 `AbstractGridContainerMenu.resized` is the only thing that calls `addPlayerInventory`, and
 the only thing that calls `resized` is `AbstractStretchingScreen` — a screen, so the client.
-Neither RS constructor adds a slot. **The server's copy of the menu therefore had an empty
-slot list**, which is survivable for extraction — `GridExtractPacket` names the resource and
-RS puts it straight into the player's inventory, touching no slot — and fatal for insertion:
-`GridInsertPacket` carries no resource at all, so `ItemGridInsertionStrategy` reads
-`containerMenu.getCarried()`. A menu with no slots is a menu the server never let you pick
-anything up in, so the carried stack is always empty and `onInsert` returns false without a
-word.
+Neither of RS's two constructors adds a slot. **The server's copy of the menu therefore had
+an empty slot list.**
+
+That is survivable for extraction and fatal for insertion, and the asymmetry is the whole
+bug:
+
+| | what the packet carries | what the server reads |
+| --- | --- | --- |
+| `GridExtractPacket` | the resource, explicitly | nothing from the menu — RS puts the stack straight into the player's inventory |
+| `GridInsertPacket` | only a mode | `containerMenu.getCarried()` |
+
+A menu with no slots is a menu the server never let you pick anything up in, because
+vanilla drops a click on a slot index the server does not have. So the server's cursor was
+always empty, `onInsert` returned false, and **nothing was logged, because returning false
+is how that call reports "no".**
 
 `PGridContainerMenu` now calls `resized` server-side. Only the first argument is read, as
-the y for the inventory, and y is a rendering concern the server has no opinion about; what
-matters is that the same thirty-six slots exist in the same order on both sides. The
-crafting grid needs it more, since its `resized` adds the 3x3 matrix and the result slot
-too.
+the inventory's y, which the server has no opinion about; what matters is that the same
+thirty-six slots exist in the same order on both sides.
 
-**Unverified.** This is a reading of RS's bytecode, not something seen working. If it is
-still wrong, `onInsert` now logs what each side saw at DEBUG — carried stack, slot count,
-active — which is the one thing that was silent.
+**How it was proved, not argued.** Every part of RS's insert path reads as correct in
+isolation, which is why three releases went out with this in them. `PrDebugCommand` drives
+the server-side calls the GUI drives, and the A/B was decisive:
 
----
+```
+/prdebug flow      slots=36 pickedUpFromSlot=0 carriedAfterPickup=64 insert=true carriedAfterInsert=0
+(slots removed)    no stone in any of the menu's 0 slots
+```
 
-**Original diagnosis, kept for the reasoning:** reported from the first in-game test of
-0.2.0.
+### Settled: two diagnostics that answered about the wrong world
 
-The whole insert path was traced through Refined Storage's bytecode and **no defect was
-found in it.** `AbstractGridContainerMenu.onInsert` and `onExtract` are symmetric;
-`GridOperationsImpl.insert` is `TransferHelper.transfer(cursor -> rootStorage)`;
-`CompositeStorageImpl.addSource` populates the insert and extract source lists together.
-The only guard `compositeInsert` has that `compositeExtract` does not is
-`StorageConfiguration.isAllowed`, and the default filter is `FilterMode.BLOCK` over an
-empty set, which allows everything. `AccessMode` defaults to `INSERT_EXTRACT`. Nothing was
-logged.
+Create's goggle tooltip is a **client** HUD. `addToGoggleTooltip` runs on the client, where
+a primitive network does not exist — it is only ever built server-side — and where a
+chest's contents are not present either.
 
-Also checked and identical to RS's own: both packet handlers dispatch on the **interface**
-(`GridInsertionStrategy` / `GridExtractionStrategy`), not on RS's concrete menu class; the
-server-side menu is built by the same protected constructor and gets its strategies from
-the same `initStrategies`; and `MenuOpenerImpl` opens an `ExtendedMenuProvider` with exactly
-the `serverPlayer.openMenu(provider, buf -> codec.encode(...))` this mod uses. **There is no
-structural difference left between our grid and RS's.** The difference is in state.
+- The External Reader's readout, added in 0.2.1, asked its questions there. It reported an
+  absent network and an empty inventory with total confidence, which is worse than no
+  readout at all.
+- The controller's network demand had the same fault and had been reading `0.0 su` since
+  0.2.0.
 
-So 0.2.2 asks the block instead of reading more bytecode. The External Reader's goggle
-readout now performs a **simulated insert of one stone at the root storage** — the same call
-`TransferHelper` makes on a player's behalf — and reports the answer, alongside the target's
-slot and empty-slot counts. That splits the problem in half:
+Both are now computed in the lazy tick on the server and shipped through `write`/`read`
+with `sendData()`, which is how Create syncs block entity state for goggles. **Any future
+readout in this mod has to do the same** — the rule is that a goggle tooltip may only
+render state that was synced, never state it looks up.
 
-| Readout | Where the fault is |
-| --- | --- |
-| `empty: 0` | The chest is full. Not a bug. |
-| would accept **yes** | The storage is willing; the fault is between the grid and it. |
-| would accept **no**, with empty slots | The storage refuses; the fault is in the reader or the network. |
+### Settled: the Arcanetic Gearbox dropped Create's item
 
-### The 0.2.1 readout answered about the wrong world
+Create's `GearboxBlock#getDrops` bypasses the loot table whenever the axis is horizontal
+and hands back `AllItems.VERTICAL_GEARBOX` directly — one block, two items, decided by the
+block rather than by loot. Inherited unchanged, a sideways Arcanetic Gearbox dropped a
+*Create* Vertical Gearbox; our loot table was correct and was simply never consulted.
+`getDrops` now applies the same rule with our items. Verified both ways in game.
 
-Worth recording because it is a trap this mod will meet again: **Create's goggle tooltip is
-a client HUD.** `addToGoggleTooltip` runs on the client, where a primitive network does not
-exist — it is only ever built server-side — and where a chest's contents are not present
-either. The readout added in 0.2.1 asked its questions there, so it reported an absent
-network and an empty inventory with total confidence. That is worse than no readout.
-
-0.2.2 computes the diagnosis on the server in the lazy tick and ships it through
-`write`/`read` with `sendData()`, which is how Create syncs block entity state for goggles.
-The controller's network demand had the same fault — it was a server-only field being read
-on the client, showing `0.0 su` regardless — and is now synced the same way, along with its
-controller count.
 
 ### The External Reader's inventory face is a coin-flip that was flipped one way
 
@@ -518,6 +481,29 @@ game never sees.
 
 berlord looked at this in game and **decided to keep it as it is**, hitbox included. It is
 not a fault and it is not an open question. Do not "align" it.
+
+## Testing the storage layer: `/prdebug`
+
+The insertion bug survived three releases because **nothing about it could be tested
+without a human and a mouse.** Every piece of RS's insert path reads as correct on its own;
+the fault was in state, and the one call that could have reported it returns a boolean.
+
+`PrDebugCommand` registers an operator-only `/prdebug` that drives the server-side calls the
+GUI drives, so the storage layer can be exercised from chat:
+
+| Command | What it answers |
+| --- | --- |
+| `/prdebug net <pos>` | containers, controller count, activeness, and everything the network holds |
+| `/prdebug flow <pos>` | opens the grid, picks a stack up through vanilla's own click handler, inserts it |
+| `/prdebug insert <pos>` | the insert alone, against a freshly built menu |
+| `/prdebug extract <pos>` | pulls a stack back out onto the cursor |
+| `/prdebug craft <pos>` | puts a log in a crafting grid's matrix and reports the result |
+
+`flow` is the important one: `AbstractContainerMenu.clicked` is exactly what the server runs
+when a click packet arrives, so a pick-up that works there is a pick-up that works for a
+player.
+
+**Keep it.** A silent boolean is what made this expensive.
 
 ## tools/
 
@@ -644,6 +630,30 @@ gearboxes were called good.
 Everything else on the External Reader and the gearboxes is previewer work — see
 Known gaps for what to check first.
 
-**Nothing in the storage layer has been verified at all.** It has never been launched. See
-"The whole storage layer is unverified in game" above for the specific things to look at,
-in the order worth looking at them.
+### The storage layer, 0.2.4
+
+Driven in a live client against a purpose-built rig — controller fed by a Create large
+cogwheel off a creative motor, two gearboxes turning corners, a shaft, a cog, both grids, a
+reader and a chest. All of the following were run and passed:
+
+| Behaviour | Result |
+| --- | --- |
+| Network forms across shafts, cogs **and gearboxes** | 8–9 containers, 1 controller, active |
+| Insert into the Mechanical Grid | `carriedAfterPickup=64 insert=true carriedAfterInsert=0` |
+| Insert into the Mechanical Crafting Grid | same, on a 46-slot menu |
+| Extract | `extract=true carried=64xminecraft:stone` |
+| Crafting matrix | `matrixSize=9`, one oak log → `4xminecraft:oak_planks` |
+| External Reader sees a chest, and sees it change | 7 diamonds put in by command appeared on the network |
+| Breaking a shaft splits the network | offcut became `containers=1 controllers=0 active=false` |
+| Two controllers | `active=false`, storage left the network, grid went dark |
+| Power removed | same, and it recovered when the motor was put back |
+| Cross-family placement | Create shaft placed against an arcanetic one popped and dropped; the arcanetic one survived |
+| Gearbox drops | horizontal axis → our vertical item; vertical axis → our normal item |
+
+**Not verified:** overstress specifically. A creative motor's capacity cannot realistically
+be exceeded, so the *overstressed* branch of `PrNodes.isPowered` was exercised only through
+its twin, speed-zero. Both set `powered=false` and nothing else distinguishes them.
+
+**Not verified:** driving the GUI with a real mouse. Every result above is a server-side
+call made through the same entry points the GUI uses. The click-to-slot path itself is
+vanilla's and is the same one a chest uses.

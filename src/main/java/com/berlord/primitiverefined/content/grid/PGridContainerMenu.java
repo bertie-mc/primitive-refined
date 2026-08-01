@@ -59,14 +59,24 @@ public class PGridContainerMenu extends AbstractGridContainerMenu {
      * y is a rendering concern the server has no opinion about. What matters is that the
      * <b>same thirty-six slots exist in the same order on both sides</b>, which is what
      * makes a click on one of them a click the server will honour.
+     *
+     * <p>Verified in game: with this, a pick-up puts 64 stone on the server's cursor and
+     * the insert that follows succeeds. With the slots taken away again, the same flow
+     * reports "no stone in any of the menu's 0 slots".
      */
+    static void giveTheServerItsSlots(AbstractGridContainerMenu menu, Inventory playerInventory) {
+        if (!playerInventory.player.level().isClientSide) {
+            menu.resized(0, 0, 0);
+        }
+    }
+
     /**
      * Says what each side saw when an insert was attempted. DEBUG, so it costs nothing in
      * normal play and is there in {@code debug.log} when the answer is needed.
      *
-     * <p>Kept past the fix above deliberately: this is the one call whose failure is
-     * silent by design - {@code onInsert} returns false and nothing anywhere says why - and
-     * it took reading most of Refined Storage's bytecode to find that out the first time.
+     * <p>Kept past the fix deliberately: this is the one call whose failure is silent by
+     * design - {@code onInsert} returns false and nothing anywhere says why - and that
+     * silence is what let the bug survive three releases.
      */
     @Override
     public boolean onInsert(GridInsertMode mode, boolean tryAlternatives) {
@@ -77,11 +87,5 @@ public class PGridContainerMenu extends AbstractGridContainerMenu {
                     getCarried(), slots.size(), isActive(), inserted);
         }
         return inserted;
-    }
-
-    static void giveTheServerItsSlots(AbstractGridContainerMenu menu, Inventory playerInventory) {
-        if (!playerInventory.player.level().isClientSide) {
-            menu.resized(0, 0, 0);
-        }
     }
 }
