@@ -352,9 +352,36 @@ first are the ones where intent mattered:
 - **Two controllers on one network** should darken everything and say so through the
   goggles.
 
-### Inserting into the grid does not work, and the cause is not yet known
+### Inserting into the grid: the server menu had no slots
 
-**Extraction works; insertion does not.** Reported from the first in-game test of 0.2.0.
+**Found in 0.2.3, after the reader's probe ruled out the storage.** The probe reported a
+chest with 27 empty slots, a live network, and *"would accept 1 stone: yes"* — so
+`rootStorage.insert` worked and the fault was above it.
+
+`AbstractGridContainerMenu.resized` is the only thing that calls `addPlayerInventory`, and
+the only thing that calls `resized` is `AbstractStretchingScreen` — a screen, so the client.
+Neither RS constructor adds a slot. **The server's copy of the menu therefore had an empty
+slot list**, which is survivable for extraction — `GridExtractPacket` names the resource and
+RS puts it straight into the player's inventory, touching no slot — and fatal for insertion:
+`GridInsertPacket` carries no resource at all, so `ItemGridInsertionStrategy` reads
+`containerMenu.getCarried()`. A menu with no slots is a menu the server never let you pick
+anything up in, so the carried stack is always empty and `onInsert` returns false without a
+word.
+
+`PGridContainerMenu` now calls `resized` server-side. Only the first argument is read, as
+the y for the inventory, and y is a rendering concern the server has no opinion about; what
+matters is that the same thirty-six slots exist in the same order on both sides. The
+crafting grid needs it more, since its `resized` adds the 3x3 matrix and the result slot
+too.
+
+**Unverified.** This is a reading of RS's bytecode, not something seen working. If it is
+still wrong, `onInsert` now logs what each side saw at DEBUG — carried stack, slot count,
+active — which is the one thing that was silent.
+
+---
+
+**Original diagnosis, kept for the reasoning:** reported from the first in-game test of
+0.2.0.
 
 The whole insert path was traced through Refined Storage's bytecode and **no defect was
 found in it.** `AbstractGridContainerMenu.onInsert` and `onExtract` are symmetric;

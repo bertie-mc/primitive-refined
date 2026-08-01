@@ -20,7 +20,13 @@ public class PCraftingGridContainerMenu extends AbstractCraftingGridContainerMen
         super(PrMenus.CRAFTING_GRID.get(), syncId, playerInventory, gridData);
     }
 
+    /**
+     * Same as the plain grid, and it matters more here: this menu's {@code resized} adds
+     * the 3x3 matrix and the result slot as well as the player inventory, so without it the
+     * server has nothing to craft in either.
+     */
     public PCraftingGridContainerMenu(int syncId, Inventory playerInventory, CraftingGrid craftingGrid) {
         super(PrMenus.CRAFTING_GRID.get(), syncId, playerInventory, craftingGrid);
+        PGridContainerMenu.giveTheServerItsSlots(this, playerInventory);
     }
 }
