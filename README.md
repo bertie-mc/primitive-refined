@@ -40,46 +40,16 @@ primitive network.
 
 ## Storage behavior
 
-The storage half of this mod is Refined Storage’s implementation, not a reimplementation
-of it. Where RS’s class is public it is called; where it is package-private it is copied
-with its licence, and where it is a base class this project cannot extend — every block
-entity here already extends Create’s `KineticBlockEntity`, and Java has one superclass to
-give — it is ported method for method under the same names, so the two can be read side by
-side. `NOTICE` lists each case.
+The Mechanical Grid and Mechanical Crafting Grid use Refined Storage’s network
+components, menus and screens. `PrNetworkNodeContainer` adapts RS node behavior to Create
+block entities: activity comes from rotation, stress and controller count, while network
+connections follow the faces that are kinetically meshed. Upstream code reused or adapted
+by this project is identified in [NOTICE](NOTICE).
 
-`PrNetworkNodeContainer` is RS’s `AbstractNetworkNodeContainerBlockEntity` plus the
-network-facing half of `AbstractBaseNetworkNodeContainerBlockEntity`, held as a field
-instead of inherited. RS finds a node through a NeoForge capability rather than an
-`instanceof` on its own base class, so nothing is lost by composing it. Two things differ,
-and both follow from the power being rotation rather than FE:
-
-- `calculateActive()` asks whether the block is turning, the kinetic network is within its
-  stress budget, and the primitive network has exactly one controller — in place of RS’s
-  redstone mode and stored energy.
-- Connections are re-read from a six-bit mask of meshed faces rather than from this block’s
-  own state changing. Kinetic adjacency is a property of the *pair* of blocks, so RS’s
-  signal does not fire for the changes that matter here.
-
-RS rate-limits activeness changes to one every twenty ticks, to damp a network sitting on
-its energy threshold. That oscillation does not exist here — activeness is pushed from the
-lazy tick, already once a second, and from `onSpeedChanged`, which is an edge — so the
-limit is deliberately not carried over.
-
-The Mechanical Grid and Mechanical Crafting Grid use Refined Storage’s own menus and
-screens. Sorting, search, view modes, item insertion and extraction, and the crafting
-matrix remain RS behavior rather than local copies. Both menu constructors lay their slots
-out the way RS’s own grid menus do, so the server and the client agree about what a slot
-click means. Autocrafting is answered by RS’s own network component rather than stubbed:
-no pattern provider can join a primitive network, so RS’s code returns nothing on its own
-account.
-
-The External Reader is RS’s External Storage. It composes every registered
-external-storage provider for the adjacent block, using RS’s own rule that the first
-provider to move anything wins; scans on RS’s adaptive work rate, which backs off to once
-every two seconds when idle and closes to once every quarter second while a chest is being
-worked, and is wound back up by a neighbour change; and remembers who last touched a
-resource across a save. Its configuration menu — filters, fuzzy mode, access mode,
-priority, void excess — is the part of RS's external storage that is intentionally absent.
+The External Reader delegates adjacent storage to RS’s registered external-storage
+providers. The first provider that moves a resource wins, idle readers reduce their scan
+rate, neighbour changes wake them promptly, and last-modified ordering survives reloads.
+The reader does not expose RS’s filter, priority, access-mode or void-excess configuration.
 
 Primitive Refined intentionally has no disks or storage blocks. A network contains only
 what its External Readers can access.
@@ -122,54 +92,10 @@ bertie-ci unit-test --project .
 The unit suite covers the External Reader’s multi-provider storage semantics and its scan
 pacing, the grid menus’ slot layout, and verifies that every registered block ships its
 blockstate, block model, item model, loot table and English name. Test code lives under
-`src/test`; diagnostic commands are not included in the release mod.
+`src/test`.
 
 CI keeps building and testing as separate jobs. Release workflows consume the artifact
 from the build job and do not maintain another build recipe.
-
-## Verification status
-
-**The Refined Storage half was rebuilt on RS's own implementation after the run below, and
-has not been re-exercised in a client since.** It compiles and the unit suite passes.
-Everything in the list below was true of the code the run tested and the intent is that it
-stays true, but the behaviour that changed needs eyes in game before it can be claimed
-again:
-
-- The External Reader now resolves what it reads when its node first goes active, rather
-  than by polling the block in front of it every second.
-- It now scans on RS's adaptive rate rather than every tick, so a chest's contents reach
-  the grid with up to two seconds' delay while nothing else is happening.
-- Both grid menus now lay out slots in the client constructor as well as the server one.
-- A grid screen now closes when the player walks more than eight blocks away, which it did
-  not before.
-
-Exercised in a running client on 2026-08-01, against a rig of controller, two gearboxes,
-a shaft, a cog, both grids, a reader and a chest, driven by a Create large cogwheel:
-
-- Network forms across shafts, cogs and gearboxes, and reports one controller.
-- Insertion and extraction both work, on the plain grid and the crafting grid.
-- The crafting matrix is nine slots and resolves recipes; one oak log gave four planks.
-- The reader exposes the chest it faces and notices contents added behind its back.
-- Breaking a shaft splits the network; the offcut goes inactive and loses its storage.
-- A second controller takes the whole network inactive and darkens the grids.
-- Losing rotation does the same, and the network recovers when it returns.
-- A Create shaft placed against an arcanetic one pops and drops; the arcanetic one
-  survives. The gearbox drops our own item on both axes.
-
-**Not verified.** Overstress specifically: a creative motor's capacity cannot realistically
-be exceeded, so that branch of `PrNodes.isPowered` was only reached through its twin,
-speed-zero. Both set the same flag and nothing downstream distinguishes them.
-
-**Not verified, and not verifiable from `tools/preview.py`** — all four are drawn by a
-Flywheel visual rather than a block model, so they need eyes in game:
-
-- The direction each of the gearbox's four shafts turns. `ArcaneticGearboxVisual`'s rule
-  is transcribed from Create's bytecode, not played; a wrong one is a flipped sign in
-  `speedOf`, which decides direction only.
-- The vertical gearbox's item model in hand.
-- Whether the External Reader's two side displays visibly differ. They run different
-  textures with different segment layouts, so they should.
-- The grid's rotating parts on all four facings.
 
 ## Assets and authoring tools
 
