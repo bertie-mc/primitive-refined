@@ -75,8 +75,7 @@ public class PCraftingGridBlockEntity extends PGridBlockEntity implements Crafti
      * obvious guess: <b>true means commit directly</b>, which is what taking a single
      * result does, and false means take a snapshot, which is what the shift-click "craft as
      * many as you can" loop does so that a run which turns out to be short of an ingredient
-     * half way through leaves the network as it found it. Verified against RS's own
-     * crafting grid rather than assumed.
+     * half way through leaves the network as it found it. This matches RS's crafting grid.
      */
     @Override
     public ExtractTransaction startExtractTransaction(Player player, boolean directCommit) {

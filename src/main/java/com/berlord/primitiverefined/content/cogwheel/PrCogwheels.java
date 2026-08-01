@@ -17,13 +17,7 @@ import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 
-/**
- * The six cogwheel variants: three gear materials by two shaft materials.
- *
- * <p>Each gets its own block entity type. That looks wasteful next to one shared type, but
- * Flywheel registers a visual per block entity type, and the visual is what draws the
- * spinning gear - a shared type would make all six render the same model.
- */
+/** Registers the configured arcanetic cogwheel variants and their Flywheel block entities. */
 public final class PrCogwheels {
 
     private PrCogwheels() {

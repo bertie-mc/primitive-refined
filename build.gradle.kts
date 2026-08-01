@@ -1,4 +1,5 @@
 import org.gradle.language.jvm.tasks.ProcessResources
+import org.gradle.api.tasks.testing.Test
 
 plugins {
     `java-library`
@@ -41,6 +42,8 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
+val mockitoAgent by configurations.creating
+
 neoForge {
     version = neo_version
 
@@ -66,6 +69,11 @@ neoForge {
         register(mod_id) {
             sourceSet(sourceSets.main.get())
         }
+    }
+
+    unitTest {
+        enable()
+        testedMod = mods.getByName(mod_id)
     }
 }
 
@@ -110,9 +118,38 @@ dependencies {
         isTransitive = false
     }
 
+    testImplementation(platform("org.junit:junit-bom:6.1.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.mockito:mockito-core:5.23.0")
+    mockitoAgent("org.mockito:mockito-core:5.23.0") {
+        isTransitive = false
+    }
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("net.neoforged:testframework:$neo_version")
+    testImplementation("maven.modrinth:refined-storage:$refined_storage_version") {
+        isTransitive = false
+    }
+    testCompileOnly("com.simibubi.create:create-1.21.1:$create_version:slim") {
+        isTransitive = false
+    }
+    testCompileOnly("net.createmod.ponder:ponder-neoforge:$ponder_version") {
+        isTransitive = false
+    }
+    testCompileOnly("dev.engine-room.flywheel:flywheel-neoforge-1.21.1:$flywheel_version") {
+        isTransitive = false
+    }
+    testRuntimeOnly("com.simibubi.create:create-1.21.1:$create_version") {
+        isTransitive = false
+    }
+
     // A dev-time `runClient` would additionally need the real Create jar on the
     // runtime classpath. It is deliberately absent: this project builds a jar for the
     // packwiz packs and is tested in a Prism instance, not in a Gradle run.
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform()
+    jvmArgs("-javaagent:${mockitoAgent.singleFile.absolutePath}")
 }
 
 val generateModMetadata = tasks.register<ProcessResources>("generateModMetadata") {

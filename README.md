@@ -1,659 +1,125 @@
 # Primitive Refined
 
-An early-game, Create-powered precursor to Refined Storage for **NeoForge 1.21.1**.
-
-The machines behave one-to-one with their Refined Storage counterparts because they **are**
-Refined Storage: every block here is an RS network node and the grids drive RS's own
-container menus and screens. What is this mod's own is the power and the wiring — the
-network runs on rotational force rather than FE, and **the shafts and cogs that carry that
-force are the cables that carry the network**.
-
-**Create and Refined Storage are both required dependencies.**
-
-## The parts
-
-| Part | Stress | Refined Storage equivalent |
-| --- | --- | --- |
-| Primitive Controller | 0 | Controller |
-| Arcanetic Shaft / Cog / Gearbox | 0 | Cable |
-| External Reader | 1 | External Storage |
-| Mechanical Grid | 5 | Grid |
-| Mechanical Crafting Grid | 10 | Crafting Grid |
-
-The controller itself is free. You pay for what you hang off it — which is why a bare
-controller spins up on any amount of rotational force, and a network full of crafting
-grids will stall a waterwheel.
-
-## How a network works
-
-**The kinetic network is the storage network.** There is one topology, not two that have to
-be kept in agreement: `KineticConnectionStrategy` answers RS's "which neighbours do you
-connect to" by asking Create's `RotationPropagator.isConnected` which neighbours it is
-already turning. A shaft line that carries rotation carries the network; break the line and
-the network splits in the same tick, because it is the same break.
-
-Consequences worth knowing:
-
-- **A node is active when its block is turning and the kinetic network is not
-  overstressed** — plus exactly one controller on the network. There is no RS energy
-  anywhere in the mod. Overstressed is the brownout: the stress units are not in fact being
-  supplied, so the grids go dark and the storage leaves the network.
-- **Each part charges its own stress where it stands**, on Create's network. The controller
-  charges nothing and reports the sum through the goggles as information only — billing it
-  there as well would charge every grid twice.
-- **Six faces only.** Create also meshes large cogwheels diagonally; the arcanetic family
-  has no large cogwheel, so that case cannot arise inside a network.
-- **A closed family.** A real Refined Storage cable or controller will not join a primitive
-  network and a primitive part will not join an RS one. `canAcceptIncomingConnection`
-  refuses anything that is not ours.
-
-Topology changes that move no speed — a shaft placed against an unpowered line — are
-noticed on the **lazy tick**, so up to half a second late. Anything that moves speed
-arrives through `onSpeedChanged` immediately.
-
-## Arcanetic parts do not mesh with Create's
-
-Two kinetic families, and they refuse each other. `RotationPropagatorMixin` returns a
-rotation speed modifier of **zero** for any cross-family pair, which is both "carries no
-speed" and "not connected" at the one point every caller in the propagator routes through.
-
-A block placed where the two would have met **breaks and drops** — `destroyBlock(pos, true)`,
-the same call Create makes when a cogwheel is asked to turn two ways at once, so the two
-failures look and sound alike. The block that pops is always the one just placed, which is
-why `PrFamilyGuard` hangs off the place event rather than off the propagator: only there is
-it known which of the two is new.
-
-Whether Create *would* have meshed them is asked by suppressing the veto for the length of
-one question and putting it to Create, rather than by reimplementing its meshing rules here.
-
-**The one crossing is the controller's roof.** Family membership is per *face*, not per
-block: the controller's top face belongs to Create, everything else about it is arcanetic.
-That is how rotational force gets into a network at all, and it is the only way it can.
-
-**Not covered:** blocks that appear without a place event — contraption disassembly,
-`/setblock`, worldgen. Those leave a dead join rather than a pop. Nothing drives across it
-either way, so the failure mode is inert rather than wrong.
-
-## The blocks
-
-### Primitive Controller (`primitive_refined:p_controller`)
-
-Topologically Create's rotational speed controller. Rotation runs through it along its
-horizontal axis, and a **large cogwheel goes on top** — without one it stays dark no
-matter how fast the shaft line under it is turning. The cogwheel must be horizontal and
-perpendicular to the controller's own axis, the same three conditions Create checks for
-its own speed controller.
-
-When it is running, the Refined Storage trace pattern on its sides animates and glows. The
-side texture is Create's own with 50 pixels replaced; a separate four-quad layer carries
-just the trace pixels as emissive, because a model that inherits Create's geometry has no
-elements of its own to hang per-face lighting on.
-
-Its own stress impact is **zero** and stays zero: every part on the network charges where it
-stands, so a bare controller still lights on any rotational force at all. The goggle readout
-adds the network's total demand and its controller count to the conditions it already
-reported.
-
-**Only one controller to a system**, which is Refined Storage's rule and berlord's. Zero
-means nothing is feeding it; more than one and every node on the network goes inactive
-rather than one of them being picked as the real one, because which one that would be is not
-a question with an answer. The controller says so through the goggles.
-
-### Arcanetic Shaft (`primitive_refined:soulstained_shaft`)
-
-Create's shaft, in soulstained steel. Same axis placement and alignment, same kinetic
-relay behaviour, same shape; it extends `AbstractSimpleShaftBlock`, the same class Create's
-own `ShaftBlock` extends, rather than reimplementing any of it.
-
-It exists as a separate block so primitive machines can be wired with a visually distinct
-line, and so a later version can restrict which shafts carry a network.
-
-### Mechanical Grid / Mechanical Crafting Grid (`p_grid`, `p_crafting_grid`)
-
-Refined Storage screen on the front, a recessed brass gearbox face on the back, mechanical
-crafter body. Rotation enters along the facing axis, through the shaft standing in the
-gearbox well, and the screen lights once the block is turning and the network is not
-overstressed - an overstressed network means the stress units are not actually being
-supplied, which is the unpowered case. They demand 5 and 10 stress.
-
-The body follows Create's mechanical crafter element for element: two slabs with a gap at
-z 6-10 and four thin rims. Every `crafter_side` face carries **Create's own face
-`rotation`** — without it a 16x6 uv region lands transposed on a 6x16 face and every side
-of the block stretches.
-
-The back is the gearbox face at **three depths**: the two-pixel perimeter at the block
-face, the plate one pixel in, and an 8x8 well three in with the shaft standing at the
-bottom of it. Each step is a picture frame of four bars — full-width top and bottom, inset
-sides — because that is the arrangement in which no two faces are ever coplanar, and
-coplanar is what z-fights.
-
-That deep well is a **deliberate choice, not a reading of the reference.** The gearbox
-texture is two depths: perimeter and shaft's 4x4 at the block face, everything between one
-pixel in. Both were built and placed side by side in game, and berlord picked the sunken
-one — it reads better than it measures. Do not "correct" it back to the texture.
-
-The shaft and the cogwheel turn, so they are **not in the block model at all**. They live
-in `block/p_grid_kinetics` and are drawn by the block entity's Flywheel visual. A visual
-does not suppress the block model, so anything drawn by both renders twice — once
-spinning, once standing still. The item model has to bake them back in, which is exactly
-what Create's own crafter item model does.
-
-The cogwheel is Create's `cogwheel_shaftless` stood on the Z axis, at full size: its teeth
-reach past the block and out through the window in the rims, which is how it meshes with a
-cogwheel laid alongside. The block is an `ICogWheel` for the same reason Create's crafter
-is one.
-
-**Extraction works in game; insertion does not.** See Known gaps.
-
-**They open Refined Storage's own grid screens.** Sorting, the search box and its query
-syntax, the view modes, the synchronizers, insert, extract, scroll, shift-click and — on the
-crafting grid — the 3x3 matrix, recipe transfer from EMI or JEI, and crafting straight out
-of the network are all RS's classes, bound to menu types this mod registers.
-`PGridContainerMenu` and `PCraftingGridContainerMenu` are two-constructor shims and nothing
-more; nothing about the grids' front end is reimplemented, so nothing about it can drift
-from RS's.
-
-A grid opens whether or not the network is running, the way RS's own does — a dark, empty
-grid is a readable answer to "is this thing on", and closing the screen in the player's face
-is not. The screen lights on the same condition the node is active on.
-
-**Autocrafting is not implemented and there is nothing to implement it with:** no pattern
-provider, no autocrafter. The four `PreviewProvider` methods answer "nothing" rather than
-throwing, and no resource is ever shown as autocraftable.
-
-### External Reader (`primitive_refined:external_reader`)
-
-Create's threshold switch, driven by rotation rather than by a comparator. It is the
-network's **External Storage**: one per attached inventory, one stress. Horizontal facing
-like the grids — indicator towards you, shaft on the face away — a deliberate narrowing,
-since Create's own switch can also sit on floors and ceilings but the shaft has to arrive
-somewhere and a horizontal line is where this mod puts it.
-
-**It reads the inventory in front of it**, so the block sits in a straight line between the
-two: shaft, reader, chest. Every registered `ExternalStorageProviderFactory` is **composed**,
-not merely tried in turn, so a reader picks up anything an RS External Storage would — this
-matters because `ItemHandlerPlatformExternalStorageProviderFactory.create` never returns
-null, so "take the first factory that answers" silently meant "take whichever is first in
-the collection". RS's own composite for this is package-private, hence
-`CompositeStorageProvider`.
-
-**Its goggle readout states what it can see**: the block in front, whether that block hands
-out an item handler on the face the reader touches, how many of its slots are empty, and
-whether the node is on a live network. Between them those separate "not powered", "not
-connected", "not an inventory" and "the chest is full".
-Change detection runs every tick — RS rate-limits its own against an adaptive work rate, but
-a primitive network is small enough to afford it and it is what makes the grid feel live.
-
-**This is the only storage medium in the mod.** No disks, no storage blocks. What a network
-holds is whatever its readers can see, which is the early-game shape of the thing: you are
-wiring up the chests you already have.
-
-Its front is Create's pixels moved, not repainted: the 4x4 hue-rotated red to purple with
-saturation untouched and value lifted, the ring around it scaled down in value alone.
-Create's wood surround, top and bottom are untouched. The back is the **two-depth**
-scheme — 2px perimeter and the middle 4x4 at the block face, everything between one pixel
-in — with that 4x4 being the turning shaft rather than texture. Note this is not the grids'
-back: they use three depths with a sunken well. Both were asked for deliberately.
-
-The indicator down each side is a 4x10 panel, lit throughout while the block turns. It is
-carved into short vertical runs, each carrying a gradient that sweeps purple to magenta to
-a bright peak and advances one step per frame, so the gradient travels along its segment.
-Colours, ramp and cadence — twelve frames at frametime 2 — are measured off
-`refinedstorage:block/controller/cutouts/purple`, because that is how the controller draws
-its traces.
-
-**It is worth knowing what this is not.** An earlier attempt lit and unlit individual
-pixels on a checkerboard, with a flare passing over each. At 4x10 that reads as a static
-checkerboard with white dots skittering across it. Per-pixel twinkle is the wrong model
-for this; flowing gradients along runs is the right one.
-
-Opposite sides run **different textures**, because Minecraft drives every animation off
-the same game time — one texture on both faces is frame-locked and no amount of authoring
-will unstick it.
-
-### Arcanetic Gearbox (`primitive_refined:arcanetic_gearbox`)
-
-**Its drops are overridden, and had to be.** Create's `GearboxBlock#getDrops` bypasses the
-loot table whenever the axis is horizontal and hands back `AllItems.VERTICAL_GEARBOX`
-directly — one block, two items, and the block decides which one comes back. Inherited
-unchanged, that made an Arcanetic Gearbox placed on its side drop a **Create** Vertical
-Gearbox; the loot table was never consulted and was never wrong. `getDrops` now applies the
-same rule with our items.
-
-
-Create's gearbox in this mod's materials. `ArcaneticGearboxBlock` extends Create's
-`GearboxBlock` outright, so the awkward part — redirecting rotation around a corner and
-reversing it across the block — stays Create's code and stays correct. The block entity
-type is ours but holds Create's own `GearboxBlockEntity`, the same trick the Arcanetic
-Shaft plays with `BracketedKineticBlockEntity`. **There is no speed or stress stat**: it
-relays at input speed, exactly as Create's does.
-
-The **Vertical Arcanetic Gearbox** is the same block placed on a horizontal axis, via its
-own item — one block, two items, which is how Create ships its own. Create's
-`VerticalGearboxItem` could not be reused: it takes only item properties and resolves
-Create's gearbox internally.
-
-The panel is a per-pixel substitution into Create's own: the light casing ring takes brass
-casing's pixel at the same coordinate, and the wood and shaft socket take
-`create:block/brass_gearbox` — which is the face Create's **sequenced gearshift** puts on
-the two ends its axis runs through. That matters: a gearbox panel has a shaft coming out
-of it, so the face substituted onto it must be one that also has a shaft.
-`create:block/sequenced_gearshift` is the sequencer display on the four sides the axis
-does *not* pass through, and putting that on a face with a shaft in it drops a red display
-strip across the panel. Brightness is what separates the perimeter ring from the socket —
-both are grey, but the socket is nearly black, and treating all grey alike fills the
-socket with casing and erases the hole.
-
-The four shafts needed a visual of their own. Create's `GearboxVisual` names
-`AllPartialModels.SHAFT_HALF` inside its constructor and builds its instance map there, so
-it cannot be subclassed and swapped. `ArcaneticGearboxVisual` is that class's shape
-rewritten against our partial; the only logic in it decides each shaft's **direction**,
-never its speed.
-
-## Assets
-
-Derived textures are **shipped outright, with permission obtained from the respective
-authors** — see [NOTICE](NOTICE). That permission is personal to this project: a fork does
-not inherit it.
-
-Recolours are a luminance remap rather than a hue shift, so Create's shading survives and
-only the palette changes. That matters mechanically as well as visually — the axis
-texture's lengthwise grooves are what make a spinning shaft read as spinning.
-
-## Deployment status
-
-Released. [`bertie-mc/primitive-refined`](https://github.com/bertie-mc/primitive-refined),
-jar attached to each GitHub Release by `release.yml`. The current version is whatever
-`mod_version` in `gradle.properties` says — this file deliberately does not repeat it.
-
-**`packs/s1-pack` does include it** — `mods/primitive-refined.pw.toml`, added with
-`packwiz github add bertie-mc/primitive-refined` and moved forward with `packwiz update`.
-The **s1 demo** instance is synced against that pack. It is *not* in `packs/bertie-pack`,
-`packs/full-test-pack` or `packs/worldgen-pack`; adding it is one `packwiz github add`
-each.
-
-### A hand-copied jar cannot survive a sync — do not try
-
-The obvious shortcut for a quick look in game is to build locally and drop the jar into
-the instance, keeping the filename identical so nothing is duplicated. **It does not
-work.** packwiz records a **hash**, not a filename: the next sync sees the file does not
-match, and re-downloads the released jar over it. This cost a round — a sync ran two
-minutes before the game launched, and three brand-new blocks were simply absent, with the
-log reporting them as unknown registry keys.
-
-So there is no in-game-before-release route for a packwiz-managed instance. Bump, tag,
-let the release build, `packwiz update`, sync. It is about six minutes and it stays put.
-
-### CI
-
-`build.yml` composes the independent `bertie-ci` build, client world-join, and
-dedicated-server readiness jobs. Both runtime jobs install shared, hash-pinned fixtures
-before loading this mod's built artifact. There are no unit-test or GameTest jobs because
-the repository does not yet contain either kind of test.
-
-Refined Storage is a hard dependency, so both runtime jobs select the shared
-`create,refined-storage` fixture. `bertie-ci` resolves both names directly from the
-hash-pinned canonical pack; no one-to-one profile declaration is needed. The client
-world-join and dedicated-server probes both pass with that dependency set.
-
-`release.yml` composes the same build job with the artifact-only GitHub publisher, so a
-release never maintains or runs a second build recipe.
-
-## The mixin
-
-`RotationPropagatorMixin` does two things, in one injection point, in declaration order.
-
-The **second** is the cross-family veto described above. The **first**, and the original
-reason the mixin exists, adds the missing large-cogwheel-drives-controller case. Create
-supports it for its own speed controller via `isLargeCogToSpeedController`, hardcoded to
-`AllBlocks.ROTATION_SPEED_CONTROLLER`, and exposes no hook on the receiving side - the
-propagator only asks the *upstream* block for a custom connection, and upstream here is
-Create's own cogwheel entity.
-
-Both inject at the head of the private `getRotationSpeedModifier`, which is the single
-point every caller routes through: `getConveyedSpeed` multiplies the source speed by it,
-and `isConnected` tests it for non-zero.
-
-Mixin runs callbacks at a shared injection point in declaration order and stops at the first
-that cancels, so the sanctioned bridge is decided before the veto ever sees it. It would
-survive either order — the controller's top face is Create's, so that pair is not
-cross-family — but the ordering makes the intent explicit rather than incidental.
-
-**Being private, it is not API.** Re-check this mixin on every Create bump. It is set to
-`defaultRequire: 1`, so if the target moves the mod fails loudly at load rather than
-quietly losing the connection.
-
-## Known gaps
-
-### Settled: inserting into the grid — the server's menu had no slots
-
-**Fixed in 0.2.3, root-caused and verified in game in 0.2.4.** Extraction worked from the
-first build; insertion never did.
-
-`AbstractGridContainerMenu.resized` is the only thing that calls `addPlayerInventory`, and
-the only thing that calls `resized` is `AbstractStretchingScreen` — a screen, so the client.
-Neither of RS's two constructors adds a slot. **The server's copy of the menu therefore had
-an empty slot list.**
-
-That is survivable for extraction and fatal for insertion, and the asymmetry is the whole
-bug:
-
-| | what the packet carries | what the server reads |
-| --- | --- | --- |
-| `GridExtractPacket` | the resource, explicitly | nothing from the menu — RS puts the stack straight into the player's inventory |
-| `GridInsertPacket` | only a mode | `containerMenu.getCarried()` |
-
-A menu with no slots is a menu the server never let you pick anything up in, because
-vanilla drops a click on a slot index the server does not have. So the server's cursor was
-always empty, `onInsert` returned false, and **nothing was logged, because returning false
-is how that call reports "no".**
-
-`PGridContainerMenu` now calls `resized` server-side. Only the first argument is read, as
-the inventory's y, which the server has no opinion about; what matters is that the same
-thirty-six slots exist in the same order on both sides.
-
-**How it was proved, not argued.** Every part of RS's insert path reads as correct in
-isolation, which is why three releases went out with this in them. `PrDebugCommand` drives
-the server-side calls the GUI drives, and the A/B was decisive:
-
-```
-/prdebug flow      slots=36 pickedUpFromSlot=0 carriedAfterPickup=64 insert=true carriedAfterInsert=0
-(slots removed)    no stone in any of the menu's 0 slots
-```
-
-### Settled: two diagnostics that answered about the wrong world
-
-Create's goggle tooltip is a **client** HUD. `addToGoggleTooltip` runs on the client, where
-a primitive network does not exist — it is only ever built server-side — and where a
-chest's contents are not present either.
-
-- The External Reader's readout, added in 0.2.1, asked its questions there. It reported an
-  absent network and an empty inventory with total confidence, which is worse than no
-  readout at all.
-- The controller's network demand had the same fault and had been reading `0.0 su` since
-  0.2.0.
-
-Both are now computed in the lazy tick on the server and shipped through `write`/`read`
-with `sendData()`, which is how Create syncs block entity state for goggles. **Any future
-readout in this mod has to do the same** — the rule is that a goggle tooltip may only
-render state that was synced, never state it looks up.
-
-### Settled: the Arcanetic Gearbox dropped Create's item
-
-Create's `GearboxBlock#getDrops` bypasses the loot table whenever the axis is horizontal
-and hands back `AllItems.VERTICAL_GEARBOX` directly — one block, two items, decided by the
-block rather than by loot. Inherited unchanged, a sideways Arcanetic Gearbox dropped a
-*Create* Vertical Gearbox; our loot table was correct and was simply never consulted.
-`getDrops` now applies the same rule with our items. Verified both ways in game.
-
-
-### The External Reader's inventory face is a coin-flip that was flipped one way
-
-The reader reads the block **in front** of it — the face with the display — because the
-shaft has to be on the back and that puts the three in a line. The consequence is that
-placing one against a chest means placing it while looking *away* from the chest, since
-`getStateForPlacement` puts the front towards the player, as the grids do.
-
-The alternative is to face it away from the player on placement, the way RS's own External
-Storage does, at the cost of the reader no longer being placed like the grids. Not asked
-about, and a one-line change either way.
-
-### Display names and registry ids have diverged
-
-The blocks were renamed; their ids were not. So:
-
-| Shown in game | Registry id |
-| --- | --- |
-| Mechanical Grid | `p_grid` |
-| Mechanical Crafting Grid | `p_crafting_grid` |
-| Arcanetic Shaft | `soulstained_shaft` |
-| Arcanetic Cog | `obsidiansteel_cogwheel_soulstained` |
-
-The blocks added since — `external_reader`, `arcanetic_gearbox` — have ids that match
-their names, so the mod now runs two conventions at once.
-
-Deliberate, for now: renaming an id destroys every placed block of that type in every
-existing world, and berlord is actively testing in one. **The window to fix this closes
-the moment anything references these ids** — a recipe, a quest, a tag, another pack.
-Nothing does yet. Do it before anything does, or accept the ids permanently.
-
-The Primitive Controller and the creative tab still read "Primitive"; only the four blocks
-above were renamed.
-
-### What the grid body still has not been checked for
-
-berlord has now seen the rebuilt body in game and taken it as it stands, so the six faults
-the previous round handed off are closed: the sides no longer stretch, the back is
-recessed, the shaft stands in its well, the cogwheel is in the gap, and both light
-correctly. The sunken back was chosen there over the flat one.
-
-### The External Reader and the gearboxes are barely tested
-
-berlord has seen the reader's display and accepted it after three passes at the effect,
-and has called the gearboxes good. Nothing else about either has been checked. In
-particular:
-
-- **The gearbox shafts' directions.** `ArcaneticGearboxVisual`'s rule is transcribed from
-  Create's bytecode, not played. If one of the four turns the wrong way it is a flipped
-  sign in `speedOf`, which decides direction only — magnitude is always the input speed.
-- **The vertical gearbox's placement**, and whether its item model reads right in hand.
-- **The reader's shaft** turning, and its lit/unlit switching under load and overstress.
-- **Whether the two sides' displays visibly differ.** They run different textures with
-  different segment layouts, so they should.
-
-### What the grid body still has not been checked for
-
-Two things about it were **never explicitly looked for**, only assumed from their code:
-
-- **Cogwheels meshing against the sides.** `PGridBlock` is an `ICogWheel`, so a cogwheel
-  laid alongside on a parallel axis should mesh and counter-rotate, the way Create's
-  crafters do. Nobody has put one there.
-- **The visual on all four facings.** `OrientedRotatingVisual.backHorizontal` turns SOUTH
-  onto `HORIZONTAL_FACING.getOpposite()` — a direction, so the sign is right, unlike
-  `SingleAxisRotatingVisual`, which turns onto the *axis* and would land a one-ended shaft
-  on the wrong end for two facings out of four. That reasoning is from the bytecode. A
-  grid facing each of north/east/south/west would confirm it in ten seconds.
-
-### Elsewhere
-
-- **The ids in `PrCogwheels.NAMES` are one entry long.** Its javadoc still describes six
-  variants, three gear materials by two shaft materials. That was true once.
-- **No security, and no place to put it.** RS wraps its grid operations in
-  `SecuredGridOperations`; this does not, because there is no security card, no security
-  manager and no network owner anywhere in the mod for it to consult. The fuzzy wrapper
-  *is* applied, so shift-clicking a damaged tool still finds the other damaged ones.
-- **With Flywheel's backend off, nothing that turns renders.** That was already true of the
-  controller's shaft stubs; it now covers the grids' shaft and cogwheel too, so a grid with
-  the backend off has an empty well and an empty gap. A fallback would have to place and
-  orient the parts by hand through `CachedBuffers.partial`, the way Create's
-  `MechanicalCrafterRenderer` does — a real path, deliberately not taken here because it
-  cannot be tested from the previewer and would have shipped unverified either way.
-- **No recipes.** Everything is creative-tab only.
-
-### Settled: the shaft's resting angle is deliberate — leave it
-
-**Shafts at rest sit at an angle inside an axis-aligned outline.** Create applies a
-per-position rotation offset (`getRotationAngleOffset`) so that neighbouring shafts look
-continuous, `SingleAxisRotatingVisual` honours it, and Create's own shafts do the same.
-The block's hitbox and selection outline do not follow that rotation, because a hitbox is
-a `VoxelShape` — axis-aligned by definition — and the angle is a render-time transform the
-game never sees.
-
-berlord looked at this in game and **decided to keep it as it is**, hitbox included. It is
-not a fault and it is not an open question. Do not "align" it.
-
-## Testing the storage layer: `/prdebug`
-
-The insertion bug survived three releases because **nothing about it could be tested
-without a human and a mouse.** Every piece of RS's insert path reads as correct on its own;
-the fault was in state, and the one call that could have reported it returns a boolean.
-
-`PrDebugCommand` registers an operator-only `/prdebug` that drives the server-side calls the
-GUI drives, so the storage layer can be exercised from chat:
-
-| Command | What it answers |
-| --- | --- |
-| `/prdebug net <pos>` | containers, controller count, activeness, and everything the network holds |
-| `/prdebug flow <pos>` | opens the grid, picks a stack up through vanilla's own click handler, inserts it |
-| `/prdebug insert <pos>` | the insert alone, against a freshly built menu |
-| `/prdebug extract <pos>` | pulls a stack back out onto the cursor |
-| `/prdebug craft <pos>` | puts a log in a crafting grid's matrix and reports the result |
-
-`flow` is the important one: `AbstractContainerMenu.clicked` is exactly what the server runs
-when a click packet arrives, so a pick-up that works there is a pick-up that works for a
-player.
-
-**Keep it.** A silent boolean is what made this expensive.
-
-## tools/
-
-Four scripts, all runnable from the repo root, none of them part of the build.
-
-| Script | What it does |
-| --- | --- |
-| `extract_assets.py` | Pulls another mod's `assets/` out of its jar, whole, into `tools/extracted/` (gitignored). Everything else here needs it run first. |
-| `preview.py` | Isometric renderer for block models — see below. |
-| `make_reader_textures.py` | Regenerates the External Reader's front, unlit side, and the three glow layers. |
-| `make_gearbox.py` | Regenerates the Arcanetic Gearbox's panel texture, its three models, its shaft partial, blockstate and loot table. |
-
-The two `make_*` scripts are **generators of record**: the textures and models they emit
-are checked in, but they are derived from Create's and Refined Storage's pixels by rule,
-not by hand, and the rules are in the scripts. Change a colour or a substitution there and
-re-run it — do not hand-edit the output, or the next run silently reverts you.
-
-The grids' models are the exception: their generator was never checked in, so
-`p_grid*.json` are hand-maintained, and the four of them must be kept identical below the
-front texture. Their `__comment` blocks carry the structure.
-
-### Previewing models without launching the game
-
-`tools/preview.py` is a small isometric renderer for these block models. It is in the repo
-now, because it had been written from scratch twice by the time it was worth keeping.
+Primitive Refined is an early-game, Create-powered storage network for NeoForge 1.21.1.
+It uses Refined Storage’s network and grid implementations, but replaces FE power and RS
+cables with a dedicated family of Create kinetics: the shafts and cogs that carry rotation
+also define the storage-network topology.
+
+Create and Refined Storage are required dependencies.
+
+## Machines
+
+| Part | Stress impact | Role |
+| --- | ---: | --- |
+| Primitive Controller | 0 | Admits Create power and activates one primitive network |
+| Arcanetic Shaft, Cog and Gearbox | 0 | Carry rotation and network connectivity |
+| External Reader | 1 | Exposes an adjacent inventory as external storage |
+| Mechanical Grid | 5 | Refined Storage grid interface |
+| Mechanical Crafting Grid | 10 | Grid interface with a 3×3 crafting matrix |
+
+A node is active while its kinetic block is turning, its Create network is not
+overstressed, and its primitive network has exactly one controller. Each machine charges
+stress at its own position; the controller’s displayed total is informational and is not
+charged a second time.
+
+## Kinetic topology
+
+`KineticConnectionStrategy` delegates adjacency to Create’s
+`RotationPropagator.isConnected`. Primitive Refined therefore has one topology rather than
+separate kinetic and storage graphs: breaking a rotational connection also splits the
+storage network.
+
+Arcanetic kinetics form a closed family and do not mesh with ordinary Create shafts or
+cogs. `RotationPropagatorMixin` enforces the separation at Create’s common rotation-speed
+modifier. `PrFamilyGuard` drops a newly placed block when it would form a cross-family
+connection, giving the player immediate feedback instead of leaving a dead-looking join.
+
+The controller’s top face is the intentional exception. A horizontal Create large
+cogwheel drives that face; the controller’s other faces remain arcanetic and carry the
+primitive network.
+
+## Storage behavior
+
+The Mechanical Grid and Mechanical Crafting Grid use Refined Storage’s own menus and
+screens. Sorting, search, view modes, item insertion and extraction, and the crafting
+matrix remain RS behavior rather than local copies. The server-side menu explicitly adds
+the same player-inventory slots that the client screen creates, so vanilla slot clicks and
+RS insertion operate on matching menus.
+
+The External Reader composes every Refined Storage external-storage provider registered
+for the adjacent block. Providers receive only the amount left after earlier providers,
+which prevents duplicate insertion or extraction while still supporting inventories added
+by other mods.
+
+Primitive Refined intentionally has no disks or storage blocks. A network contains only
+what its External Readers can access.
+
+## Rendering
+
+Kinetic parts are rendered by Flywheel visuals so shafts and cogs turn with their Create
+network. Static block models omit those parts to avoid rendering stationary geometry over
+the instances; item models include them because inventory rendering has no Flywheel
+visual.
+
+The controller, grids and reader synchronize their server-computed operating state for
+goggle tooltips and lit models. Client tooltips render synchronized state instead of
+trying to inspect server-only network or inventory data.
+
+## Current limitations
+
+- There are no recipes yet; blocks are available from the creative tab.
+- There is no RS security-manager equivalent or autocrafting machinery.
+- Cross-family blocks created without a placement event, such as by world generation or
+  `/setblock`, are left as inert joins instead of being dropped.
+- With the Flywheel backend disabled, rotating partials have no fallback renderer.
+- Several original registry IDs (`p_grid`, `p_crafting_grid`, `soulstained_shaft`, and
+  `obsidiansteel_cogwheel_soulstained`) predate the current display names. They remain
+  stable to preserve existing worlds.
+
+## Building and testing
+
+The project uses Java 21, Gradle 8.14.4 from the shared Nix environment, NeoForge
+21.1.233, ModDevGradle 2.0.134, Minecraft 1.21.1, Create 6.0.10 and Refined Storage 2.0.9.
+There is intentionally no Gradle wrapper.
+
+From a shell containing the shared toolchain:
 
 ```bash
-python tools/extract_assets.py path/to/create.jar
-python tools/preview.py src/main/resources/assets/primitive_refined/models/block/p_grid.json out.png
+bertie-ci build --project . --output-dir .bertie-ci/artifact
+bertie-ci unit-test --project .
 ```
 
-Needs `pillow` and `numpy`. It draws two views, from opposite corners, so the front and
-back of a block can be checked at once, and it implements the parts of the model format
-these models actually use — per-face `uv` with `rotation`, `texture_size`, element
-`rotation`, and alpha — the way `FaceBakery` does.
+The unit suite covers the External Reader’s multi-provider storage semantics and verifies
+that every registered block ships its blockstate, block model, item model, loot table and
+English name. Test code lives under `src/test`; diagnostic commands are not included in
+the release mod.
 
-**Face `rotation` is the one that matters.** The previous previewer ignored it and so was
-blind to the exact fault it was being used to look for: a 16x6 uv region sitting
-transposed on a 6x16 face. If you doubt the renderer, render Create's own
-`mechanical_crafter/block.json` with it — that model rotates uvs on all six faces, so it
-either comes out looking like a crafter or the renderer is wrong.
+CI keeps building and testing as separate jobs. Release workflows consume the artifact
+from the build job and do not maintain another build recipe.
 
-**Extract each mod's assets whole, once**, from the jars pinned in this pack. Extracting
-file-by-file is what left the previewer unable to resolve Create's parents and cost two
-rounds of grid work shipped blind. `unzip` with a wildcard is unreliable here; on MSYS it
-extracted directory entries and no files even with `MSYS2_ARG_CONV_EXCL` set — which is
-why `extract_assets.py` uses Python's `zipfile`. It writes into `tools/extracted/`, which
-is gitignored.
+## Assets and authoring tools
 
-What it will not tell you: anything drawn by a block entity renderer or a Flywheel visual,
-which for the grids is the shaft and the cogwheel. To look at those, render
-`block/p_grid_kinetics.json` on its own, or merge its elements into the body by hand.
+Derived textures are distributed with permission from their respective authors. See
+[NOTICE](NOTICE); those permissions are project-specific and are not granted to forks by
+the Unlicense.
 
-## The texture_size trap — uvs are always /16
+The repository includes four optional Python tools:
 
-**`texture_size` does nothing.** The string does not appear anywhere in NeoForge or in
-Minecraft — grep the jars. It is a Blockbench authoring note, written into the file and
-then ignored by the game. Every uv is normalised by **16**, whatever the texture's real
-resolution: a 32x32 sprite is still addressed `0..16`.
-
-So Create's cogwheel uvs, which look like they are in a 32-wide space because
-`cogwheel.json` declares `"texture_size": [32, 32]` next to them, are not. They are
-ordinary uvs and must be copied **verbatim**. Rescaling them to "match" the atlas breaks
-them.
-
-This cost a round. The grid's cogwheel kept Create's uvs and was right; the shaft's were
-doubled to suit the declared 32, which ran them to 1.25 of the sprite — off the edge, into
-the atlas — and the shaft rendered **black**. Two parts of one model, one correct and one
-not, which is what made it look like a lighting fault a second time.
-
-`tools/preview.py` deliberately does not honour `texture_size` either, for the same
-reason. An earlier version did, and so disagreed with the game on exactly the models that
-declare one.
-
-## The occlusion trap — why instanced parts render black
-
-A Flywheel instance is lit from the light value at the **block's own position**. A block
-that occludes blocks light, so that value is zero, so anything drawn as an instance comes
-out pitch black. The block's body is unaffected, because chunk-mesh faces take their light
-from the neighbouring position instead — which is what makes this present as a texture or
-material fault when it is neither.
-
-The grids shipped in `v0.1.0` with exactly this: `gridProperties()` was the one set of
-block properties in the mod without `.noOcclusion()`, and the grids were the only blocks
-whose shaft and cogwheel were black. Every other block here that draws an instance — the
-controller, the Arcanetic Shaft, the whole cogwheel family — had always set it.
-
-So: **any block with a Flywheel visual needs `.noOcclusion()`.** For these it is right
-anyway; the rims have a see-through window and the back is recessed, so it was never a
-solid cube.
-
-## The crafter_side trap
-
-`create:block/crafter_side` has a **48-pixel transparent window** at cols 2-13, rows 6-9.
-Create never samples it: its side uvs take rows 0-6 on the front slab and rows 10-16 on the
-back one, and the gap between them - z 6 to 10 - is a real hole in the geometry where the
-mechanism shows. Stretch the whole texture over one 0-16 cube and the block is
-see-through. This cost a round; it is why the body is built as two slabs and four rims.
-
-Read the other way round, the window is not a trap but the *point*: it is the slot a
-cogwheel's teeth stick out through. Create's crafter is an `ICogWheel` and its cogwheel is
-full size, teeth from -1 to 17, so they emerge through this window and mesh. Ours does the
-same.
-
-## Verified in game
-
-Confirmed by berlord in the development instance: the controller renders and lights, its
-goggle readout reports every lit condition, it takes power both through its horizontal
-shaft line and from a large cogwheel above (the mixin), it drives that cogwheel, and the
-Arcanetic Shaft relays force and spins.
-
-Also confirmed: the grids light when powered, and our cogwheels place correctly onto a
-large cogwheel (they did not before - the item must be Create's `CogwheelBlockItem`, whose
-`onItemUseFirst` does the meshing; a plain `BlockItem` shows the ghost but places flat).
-
-Not verified: the controller's shaft stubs spinning, the restored controller glow, and
-anything with Flywheel's backend switched off.
-
-Since then, and confirmed the same way: the rebuilt grid body renders correctly and its
-cogwheel and shaft are lit rather than black; the sunken back was chosen over the flat one
-by looking at both; the Arcanetic Shaft's resting angle was looked at and kept; and the
-gearboxes were called good.
-
-Everything else on the External Reader and the gearboxes is previewer work — see
-Known gaps for what to check first.
-
-### The storage layer, 0.2.4
-
-Driven in a live client against a purpose-built rig — controller fed by a Create large
-cogwheel off a creative motor, two gearboxes turning corners, a shaft, a cog, both grids, a
-reader and a chest. All of the following were run and passed:
-
-| Behaviour | Result |
+| Script | Purpose |
 | --- | --- |
-| Network forms across shafts, cogs **and gearboxes** | 8–9 containers, 1 controller, active |
-| Insert into the Mechanical Grid | `carriedAfterPickup=64 insert=true carriedAfterInsert=0` |
-| Insert into the Mechanical Crafting Grid | same, on a 46-slot menu |
-| Extract | `extract=true carried=64xminecraft:stone` |
-| Crafting matrix | `matrixSize=9`, one oak log → `4xminecraft:oak_planks` |
-| External Reader sees a chest, and sees it change | 7 diamonds put in by command appeared on the network |
-| Breaking a shaft splits the network | offcut became `containers=1 controllers=0 active=false` |
-| Two controllers | `active=false`, storage left the network, grid went dark |
-| Power removed | same, and it recovered when the motor was put back |
-| Cross-family placement | Create shaft placed against an arcanetic one popped and dropped; the arcanetic one survived |
-| Gearbox drops | horizontal axis → our vertical item; vertical axis → our normal item |
+| `tools/extract_assets.py` | Extract dependency assets into the ignored `tools/extracted/` tree |
+| `tools/preview.py` | Render the subset of Minecraft block models used by this project |
+| `tools/make_reader_textures.py` | Regenerate the External Reader textures |
+| `tools/make_gearbox.py` | Regenerate the gearbox texture, models, blockstate and loot table |
 
-**Not verified:** overstress specifically. A creative motor's capacity cannot realistically
-be exceeded, so the *overstressed* branch of `PrNodes.isPowered` was exercised only through
-its twin, speed-zero. Both set `powered=false` and nothing else distinguishes them.
+The generated reader and gearbox assets are checked in, but their generator scripts are
+the source of truth. Do not hand-edit generated output.
 
-**Not verified:** driving the GUI with a real mouse. Every result above is a server-side
-call made through the same entry points the GUI uses. The click-to-slot path itself is
-vanilla's and is the same one a chest uses.
+`tools/preview.py` requires Pillow and NumPy. It does not render block-entity or Flywheel
+visuals. Minecraft normalizes model UV coordinates by 16 regardless of Blockbench’s
+`texture_size` authoring hint; the previewer follows that behavior.
+
+## License
+
+Original code is released under [The Unlicense](UNLICENSE). Third-party and derived assets
+are excluded as described in [NOTICE](NOTICE).
