@@ -49,6 +49,6 @@ public final class PrCaps {
      * is a question about both blocks rather than about one side of one of them.
      */
     private static NetworkNodeContainerProvider provider(PrNodeHost host, Direction direction) {
-        return host.prNode().containers();
+        return host.prNode().getContainerProvider();
     }
 }

@@ -2,9 +2,8 @@ package com.berlord.primitiverefined.content.controller;
 
 import com.berlord.primitiverefined.PrStress;
 import com.berlord.primitiverefined.network.PrControllerNode;
-import com.berlord.primitiverefined.network.PrNode;
+import com.berlord.primitiverefined.network.PrNetworkNodeContainer;
 import com.berlord.primitiverefined.network.PrNodeHost;
-import com.berlord.primitiverefined.network.PrNodes;
 import com.refinedmods.refinedstorage.api.network.Network;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
@@ -31,7 +30,8 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public class PControllerBlockEntity extends KineticBlockEntity implements PrNodeHost {
 
-    private final PrNode node = new PrNode(this, new PrControllerNode(), "primitive_controller");
+    private final PrNetworkNodeContainer node =
+            new PrNetworkNodeContainer(this, new PrControllerNode(), "primitive_controller");
 
     /**
      * The network's total cost, for the goggle readout. Never charged - see {@link PrStress}.
@@ -51,7 +51,7 @@ public class PControllerBlockEntity extends KineticBlockEntity implements PrNode
     }
 
     @Override
-    public PrNode prNode() {
+    public PrNetworkNodeContainer prNode() {
         return node;
     }
 
@@ -69,7 +69,7 @@ public class PControllerBlockEntity extends KineticBlockEntity implements PrNode
     @Override
     public void clearRemoved() {
         super.clearRemoved();
-        node.onClearRemoved();
+        node.clearRemoved();
     }
 
     /**
@@ -79,7 +79,7 @@ public class PControllerBlockEntity extends KineticBlockEntity implements PrNode
     @Override
     public void remove() {
         super.remove();
-        node.onSetRemoved();
+        node.setRemoved();
     }
 
     @Override
@@ -103,35 +103,35 @@ public class PControllerBlockEntity extends KineticBlockEntity implements PrNode
     /**
      * Re-reads the cogwheel and the network, and flips the lit state if either changed.
      *
-     * <p>The controller lights on the same three conditions it always did - a valid
-     * cogwheel above, turning, not overstressed - plus a fourth now that a network can
-     * exist: it must be the only controller on it.
+     * <p>The lit state is not simply the node's activeness here, which is why the container
+     * is asked to leave the block state alone: the controller also wants a valid cogwheel
+     * above it. That is all but implied - without one nothing is turning this line, and a
+     * node that is not turning is not active - but the goggles distinguish the two, and so
+     * does the model.
      */
     private void refresh() {
         if (level == null || level.isClientSide) {
             return;
         }
 
-        boolean powered = PrNodes.isPowered(this);
-        node.refresh(powered);
+        BlockState state = getBlockState();
+        node.update(state, null);
 
-        Network network = node.network();
+        Network network = node.getNetwork();
         float newDemand = PrStress.networkDemand(network);
-        int newControllers = network == null ? 0 : PrNode.controllerCount(network);
+        int newControllers = network == null ? 0 : PrNetworkNodeContainer.controllerCount(network);
         if (newDemand != demand || newControllers != controllers) {
             demand = newDemand;
             controllers = newControllers;
             sendData();
         }
 
-        BlockState state = getBlockState();
         if (!(state.getBlock() instanceof PControllerBlock)) {
             return;
         }
 
-        boolean shouldBeLit = PControllerBlock.hasValidCogwheelAbove(level, worldPosition, state)
-                && powered
-                && node.hasExactlyOneController();
+        boolean shouldBeLit = node.isActive()
+                && PControllerBlock.hasValidCogwheelAbove(level, worldPosition, state);
 
         if (state.getValue(PControllerBlock.LIT) != shouldBeLit) {
             // switchToBlockState rather than setBlock: it swaps the state without tearing

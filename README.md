@@ -40,16 +40,46 @@ primitive network.
 
 ## Storage behavior
 
+The storage half of this mod is Refined Storage’s implementation, not a reimplementation
+of it. Where RS’s class is public it is called; where it is package-private it is copied
+with its licence, and where it is a base class this project cannot extend — every block
+entity here already extends Create’s `KineticBlockEntity`, and Java has one superclass to
+give — it is ported method for method under the same names, so the two can be read side by
+side. `NOTICE` lists each case.
+
+`PrNetworkNodeContainer` is RS’s `AbstractNetworkNodeContainerBlockEntity` plus the
+network-facing half of `AbstractBaseNetworkNodeContainerBlockEntity`, held as a field
+instead of inherited. RS finds a node through a NeoForge capability rather than an
+`instanceof` on its own base class, so nothing is lost by composing it. Two things differ,
+and both follow from the power being rotation rather than FE:
+
+- `calculateActive()` asks whether the block is turning, the kinetic network is within its
+  stress budget, and the primitive network has exactly one controller — in place of RS’s
+  redstone mode and stored energy.
+- Connections are re-read from a six-bit mask of meshed faces rather than from this block’s
+  own state changing. Kinetic adjacency is a property of the *pair* of blocks, so RS’s
+  signal does not fire for the changes that matter here.
+
+RS rate-limits activeness changes to one every twenty ticks, to damp a network sitting on
+its energy threshold. That oscillation does not exist here — activeness is pushed from the
+lazy tick, already once a second, and from `onSpeedChanged`, which is an edge — so the
+limit is deliberately not carried over.
+
 The Mechanical Grid and Mechanical Crafting Grid use Refined Storage’s own menus and
 screens. Sorting, search, view modes, item insertion and extraction, and the crafting
-matrix remain RS behavior rather than local copies. The server-side menu explicitly adds
-the same player-inventory slots that the client screen creates, so vanilla slot clicks and
-RS insertion operate on matching menus.
+matrix remain RS behavior rather than local copies. Both menu constructors lay their slots
+out the way RS’s own grid menus do, so the server and the client agree about what a slot
+click means. Autocrafting is answered by RS’s own network component rather than stubbed:
+no pattern provider can join a primitive network, so RS’s code returns nothing on its own
+account.
 
-The External Reader composes every Refined Storage external-storage provider registered
-for the adjacent block. Providers receive only the amount left after earlier providers,
-which prevents duplicate insertion or extraction while still supporting inventories added
-by other mods.
+The External Reader is RS’s External Storage. It composes every registered
+external-storage provider for the adjacent block, using RS’s own rule that the first
+provider to move anything wins; scans on RS’s adaptive work rate, which backs off to once
+every two seconds when idle and closes to once every quarter second while a chest is being
+worked, and is wound back up by a neighbour change; and remembers who last touched a
+resource across a save. Its configuration menu — filters, fuzzy mode, access mode,
+priority, void excess — is the part of RS's external storage that is intentionally absent.
 
 Primitive Refined intentionally has no disks or storage blocks. A network contains only
 what its External Readers can access.
@@ -89,15 +119,29 @@ bertie-ci build --project . --output-dir .bertie-ci/artifact
 bertie-ci unit-test --project .
 ```
 
-The unit suite covers the External Reader’s multi-provider storage semantics and verifies
-that every registered block ships its blockstate, block model, item model, loot table and
-English name. Test code lives under `src/test`; diagnostic commands are not included in
-the release mod.
+The unit suite covers the External Reader’s multi-provider storage semantics and its scan
+pacing, the grid menus’ slot layout, and verifies that every registered block ships its
+blockstate, block model, item model, loot table and English name. Test code lives under
+`src/test`; diagnostic commands are not included in the release mod.
 
 CI keeps building and testing as separate jobs. Release workflows consume the artifact
 from the build job and do not maintain another build recipe.
 
 ## Verification status
+
+**The Refined Storage half was rebuilt on RS's own implementation after the run below, and
+has not been re-exercised in a client since.** It compiles and the unit suite passes.
+Everything in the list below was true of the code the run tested and the intent is that it
+stays true, but the behaviour that changed needs eyes in game before it can be claimed
+again:
+
+- The External Reader now resolves what it reads when its node first goes active, rather
+  than by polling the block in front of it every second.
+- It now scans on RS's adaptive rate rather than every tick, so a chest's contents reach
+  the grid with up to two seconds' delay while nothing else is happening.
+- Both grid menus now lay out slots in the client constructor as well as the server one.
+- A grid screen now closes when the player walks more than eight blocks away, which it did
+  not before.
 
 Exercised in a running client on 2026-08-01, against a rig of controller, two gearboxes,
 a shaft, a cog, both grids, a reader and a chest, driven by a Create large cogwheel:

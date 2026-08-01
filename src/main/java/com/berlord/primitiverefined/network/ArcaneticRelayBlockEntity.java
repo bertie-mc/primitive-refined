@@ -24,21 +24,22 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public class ArcaneticRelayBlockEntity extends BracketedKineticBlockEntity implements PrNodeHost {
 
-    private final PrNode node = new PrNode(this, new SimpleNetworkNode(0L), "arcanetic_relay");
+    private final PrNetworkNodeContainer node =
+            new PrNetworkNodeContainer(this, new SimpleNetworkNode(0L), "arcanetic_relay");
 
     public ArcaneticRelayBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 
     @Override
-    public PrNode prNode() {
+    public PrNetworkNodeContainer prNode() {
         return node;
     }
 
     @Override
     public void clearRemoved() {
         super.clearRemoved();
-        node.onClearRemoved();
+        node.clearRemoved();
     }
 
     /**
@@ -48,18 +49,18 @@ public class ArcaneticRelayBlockEntity extends BracketedKineticBlockEntity imple
     @Override
     public void remove() {
         super.remove();
-        node.onSetRemoved();
+        node.setRemoved();
     }
 
     @Override
     public void onSpeedChanged(float previousSpeed) {
         super.onSpeedChanged(previousSpeed);
-        node.refresh(PrNodes.isPowered(this));
+        node.update(getBlockState(), null);
     }
 
     @Override
     public void lazyTick() {
         super.lazyTick();
-        node.refresh(PrNodes.isPowered(this));
+        node.update(getBlockState(), null);
     }
 }

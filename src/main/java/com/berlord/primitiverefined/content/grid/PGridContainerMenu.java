@@ -19,23 +19,21 @@ import net.minecraft.world.entity.player.Inventory;
  *
  * <p>Two constructors, as RS's own grid has: the {@link GridData} one is what the client
  * builds from the packet, the {@link Grid} one is what the block entity opens on the
- * server.
+ * server. Both call {@code resized(0, 0, 0)}, which is what lays the slots out; RS's own
+ * {@code GridContainerMenu} does exactly this in exactly these two places. On the client the
+ * screen calls {@code resized} again with real coordinates once it knows its own height, and
+ * on the server nothing ever will - which is why leaving it out left the server with a menu
+ * that had no slots to click.
  */
 public class PGridContainerMenu extends AbstractGridContainerMenu {
 
     public PGridContainerMenu(int syncId, Inventory playerInventory, GridData gridData) {
         super(PrMenus.GRID.get(), syncId, playerInventory, gridData);
+        resized(0, 0, 0);
     }
 
     public PGridContainerMenu(int syncId, Inventory playerInventory, Grid grid) {
         super(PrMenus.GRID.get(), syncId, playerInventory, grid);
-        giveTheServerItsSlots(this, playerInventory);
-    }
-
-    /** Gives the server the same player-inventory slots that the client screen creates. */
-    static void giveTheServerItsSlots(AbstractGridContainerMenu menu, Inventory playerInventory) {
-        if (!playerInventory.player.level().isClientSide) {
-            menu.resized(0, 0, 0);
-        }
+        resized(0, 0, 0);
     }
 }

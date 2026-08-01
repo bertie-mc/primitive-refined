@@ -114,6 +114,44 @@ MIT licensed:
 MIT permits this, provided the notice above travels with the files. It does.
 
 
+REFINED STORAGE - MIT - PORTED CODE
+
+The storage half of this mod is Refined Storage's, and three of its classes are
+Refined Storage's source rather than a reimplementation of it. Each is
+package-private upstream, which is the only reason it is copied here instead of
+called; each carries its provenance in its own class comment.
+
+  src/main/java/com/berlord/primitiverefined/content/reader/
+    CompositeExternalStorageProvider.java
+      from com.refinedmods.refinedstorage.common.storage.externalstorage
+           .CompositeExternalStorageProvider
+
+    ExternalStorageWorkRate.java
+      from com.refinedmods.refinedstorage.common.storage.externalstorage
+           .ExternalStorageWorkRate
+
+    ExternalStorageTrackedStorageRepository.java
+      from com.refinedmods.refinedstorage.common.storage.externalstorage
+           .ExternalStorageTrackedStorageRepository
+
+Two more classes are structural ports rather than copies - the same logic under
+the same method names, with the parts a rotation-powered network does not have
+left out and the parts Create needs added:
+
+  src/main/java/com/berlord/primitiverefined/network/PrNetworkNodeContainer.java
+      from com.refinedmods.refinedstorage.common.api.support.network
+           .AbstractNetworkNodeContainerBlockEntity and
+           com.refinedmods.refinedstorage.common.support.network
+           .AbstractBaseNetworkNodeContainerBlockEntity
+
+  src/main/java/com/berlord/primitiverefined/content/grid/PGridBlockEntity.java
+      the Grid implementation, from
+           com.refinedmods.refinedstorage.common.grid.AbstractGridBlockEntity
+
+The same MIT licence and copyright notice reproduced above covers all of these,
+and it travels with them. They are not covered by the Unlicense dedication.
+
+
 COMPILE-TIME DEPENDENCIES
 
 Resolved from public mavens (createmod.net, NeoForged, Modrinth) at build time.

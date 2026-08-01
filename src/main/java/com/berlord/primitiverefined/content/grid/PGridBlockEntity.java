@@ -5,14 +5,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import com.berlord.primitiverefined.network.PrNode;
+import com.berlord.primitiverefined.network.PrNetworkNodeContainer;
 import com.berlord.primitiverefined.network.PrNodeHost;
-import com.berlord.primitiverefined.network.PrNodes;
 import com.refinedmods.refinedstorage.api.autocrafting.calculation.CancellationToken;
 import com.refinedmods.refinedstorage.api.autocrafting.preview.Preview;
 import com.refinedmods.refinedstorage.api.autocrafting.preview.TreePreview;
 import com.refinedmods.refinedstorage.api.autocrafting.task.TaskId;
 import com.refinedmods.refinedstorage.api.network.Network;
+import com.refinedmods.refinedstorage.api.network.autocrafting.AutocraftingNetworkComponent;
 import com.refinedmods.refinedstorage.api.network.impl.node.grid.GridNetworkNode;
 import com.refinedmods.refinedstorage.api.network.node.grid.GridOperations;
 import com.refinedmods.refinedstorage.api.network.node.grid.GridWatcher;
@@ -32,11 +32,14 @@ import com.refinedmods.refinedstorage.common.grid.GridData;
 import com.refinedmods.refinedstorage.common.support.containermenu.ExtendedMenuProvider;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 
+import java.util.stream.Collectors;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamEncoder;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -56,24 +59,28 @@ import net.minecraft.world.level.block.state.BlockState;
  * two differ in stress, in the textures their models name, and in whether there is a 3x3
  * matrix on the front.
  *
- * <p><b>Autocrafting is not implemented</b> and deliberately so: there is no pattern
- * provider and no autocrafter in this mod, so a primitive network has nothing to craft
- * with. The four {@code PreviewProvider} methods answer "nothing" rather than throwing, and
- * the grid simply never shows an autocraftable resource.
+ * <p>The {@code Grid} implementation below is Refined Storage's {@code AbstractGridBlockEntity}
+ * method for method, down to the autocrafting delegation. <b>There is no autocrafting on a
+ * primitive network</b> - no pattern provider, no autocrafter, and no RS block can join one
+ * because {@code KineticConnectionStrategy} refuses everything outside the arcanetic family -
+ * so RS's own code returns nothing here without needing to be told to. That is a better
+ * answer than a stub: it is right for the same reason RS's is, rather than by assertion.
  */
 public class PGridBlockEntity extends KineticBlockEntity
         implements PrNodeHost, Grid, ExtendedMenuProvider<GridData> {
 
     private final GridNetworkNode gridNode = new GridNetworkNode(0L);
-    private final PrNode node;
+    private final PrNetworkNodeContainer node;
 
     public PGridBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        this.node = new PrNode(this, gridNode, "primitive_grid");
+        // Integer.MAX_VALUE is RS's own priority for a grid: when a network splits, the grid
+        // is re-seeded first, so an open screen keeps the half it is standing on.
+        this.node = new PrNetworkNodeContainer(this, gridNode, "primitive_grid", Integer.MAX_VALUE);
     }
 
     @Override
-    public PrNode prNode() {
+    public PrNetworkNodeContainer prNode() {
         return node;
     }
 
@@ -91,7 +98,7 @@ public class PGridBlockEntity extends KineticBlockEntity
     @Override
     public void clearRemoved() {
         super.clearRemoved();
-        node.onClearRemoved();
+        node.clearRemoved();
     }
 
     /**
@@ -101,7 +108,7 @@ public class PGridBlockEntity extends KineticBlockEntity
     @Override
     public void remove() {
         super.remove();
-        node.onSetRemoved();
+        node.setRemoved();
     }
 
     @Override
@@ -123,27 +130,15 @@ public class PGridBlockEntity extends KineticBlockEntity
     }
 
     /**
-     * Flips the lit state, and pushes the same condition into the network.
+     * Pushes the kinetic state into the network, and lets the lit state follow it.
      *
-     * <p>The screen now means something it did not before: lit is exactly "on a working
-     * network". Turning and not overstressed is still the kinetic half of that, and the
-     * network adds the other half - one controller, and connected to it.
+     * <p>The screen means exactly one thing: lit is "on a working network". Turning and not
+     * overstressed is the kinetic half of that and one controller is the other, and both are
+     * {@code calculateActive}'s business rather than this method's - which is why the lit
+     * property is handed over rather than compared here.
      */
     private void refresh() {
-        if (level == null || level.isClientSide) {
-            return;
-        }
-        BlockState state = getBlockState();
-        if (!(state.getBlock() instanceof PGridBlock)) {
-            return;
-        }
-        node.refresh(PrNodes.isPowered(this));
-
-        boolean shouldBeLit = gridNode.isActive();
-        if (state.getValue(PGridBlock.LIT) != shouldBeLit) {
-            KineticBlockEntity.switchToBlockState(level, worldPosition,
-                    state.setValue(PGridBlock.LIT, shouldBeLit));
-        }
+        node.update(getBlockState(), PGridBlock.LIT);
     }
 
     // --- Grid -------------------------------------------------------------------
@@ -186,12 +181,21 @@ public class PGridBlockEntity extends KineticBlockEntity
     }
 
     /**
-     * No autocrafting on a primitive network, so nothing is ever autocraftable. RS reads
-     * this to decide which resources get the blue "craftable" treatment in the grid.
+     * Which resources get the blue "craftable" treatment in the grid. RS's own answer,
+     * which on a primitive network is the empty set because nothing on it holds a pattern.
      */
     @Override
     public Set<PlatformResourceKey> getAutocraftableResources() {
-        return Set.of();
+        Network network = gridNode.getNetwork();
+        if (network == null) {
+            return Set.of();
+        }
+        return network.getComponent(AutocraftingNetworkComponent.class)
+                .getOutputs()
+                .stream()
+                .filter(PlatformResourceKey.class::isInstance)
+                .map(PlatformResourceKey.class::cast)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -216,35 +220,54 @@ public class PGridBlockEntity extends KineticBlockEntity
         return operations;
     }
 
+    /**
+     * RS's own test, which is {@code Container}'s: the block entity is still there, it is
+     * still this block, and the player has not walked more than eight blocks away. The last
+     * of those is the part worth keeping - a grid screen that stays open across the map is
+     * a grid screen operating on a network the player cannot see.
+     */
     @Override
     public boolean canMenuStayOpen(Player player) {
-        return !isRemoved() && level != null
-                && level.getBlockState(worldPosition).getBlock() instanceof PGridBlock;
+        return Container.stillValidBlockEntity(this, player);
     }
 
-    // --- PreviewProvider: autocrafting, which this mod does not have -------------
+    // --- PreviewProvider --------------------------------------------------------
+    // RS's AbstractGridBlockEntity verbatim. A primitive network carries no patterns, so
+    // every one of these answers "nothing" of its own accord.
 
     @Override
     public CompletableFuture<Optional<Preview>> getPreview(ResourceKey resource, long amount,
                                                            CancellationToken cancellationToken) {
-        return CompletableFuture.completedFuture(Optional.empty());
+        return autocrafting()
+                .map(component -> component.getPreview(resource, amount, cancellationToken))
+                .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
     }
 
     @Override
     public CompletableFuture<Optional<TreePreview>> getTreePreview(ResourceKey resource, long amount,
                                                                    CancellationToken cancellationToken) {
-        return CompletableFuture.completedFuture(Optional.empty());
+        return autocrafting()
+                .map(component -> component.getTreePreview(resource, amount, cancellationToken))
+                .orElseGet(() -> CompletableFuture.completedFuture(Optional.empty()));
     }
 
     @Override
     public CompletableFuture<Long> getMaxAmount(ResourceKey resource, CancellationToken cancellationToken) {
-        return CompletableFuture.completedFuture(0L);
+        return autocrafting()
+                .map(component -> component.getMaxAmount(resource, cancellationToken))
+                .orElseGet(() -> CompletableFuture.completedFuture(0L));
     }
 
     @Override
     public Optional<TaskId> startTask(ResourceKey resource, long amount, Actor actor, boolean notify,
                                       CancellationToken cancellationToken) {
-        return Optional.empty();
+        return autocrafting()
+                .flatMap(component -> component.startTask(resource, amount, actor, notify, cancellationToken));
+    }
+
+    private Optional<AutocraftingNetworkComponent> autocrafting() {
+        return Optional.ofNullable(gridNode.getNetwork())
+                .map(network -> network.getComponent(AutocraftingNetworkComponent.class));
     }
 
     // --- Menu -------------------------------------------------------------------

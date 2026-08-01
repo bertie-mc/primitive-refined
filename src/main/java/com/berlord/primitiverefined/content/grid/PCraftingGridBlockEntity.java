@@ -63,9 +63,11 @@ public class PCraftingGridBlockEntity extends PGridBlockEntity implements Crafti
         return craftingRecipe.getResult();
     }
 
+    /** The block's level, not the player's, as RS does - they are the same level, and the
+     *  block is the thing whose recipe manager is being asked. */
     @Override
     public NonNullList<ItemStack> getRemainingItems(Player player, CraftingInput input) {
-        return craftingRecipe.getRemainingItems(player.level(), player, input);
+        return craftingRecipe.getRemainingItems(level, player, input);
     }
 
     /**

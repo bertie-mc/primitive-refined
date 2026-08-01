@@ -1,26 +1,17 @@
 package com.berlord.primitiverefined.content.reader;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import com.berlord.primitiverefined.PrStress;
-import com.berlord.primitiverefined.network.PrNode;
+import com.berlord.primitiverefined.network.PrNetworkNodeContainer;
 import com.berlord.primitiverefined.network.PrNodeHost;
-import com.berlord.primitiverefined.network.PrNodes;
 import com.refinedmods.refinedstorage.api.core.Action;
 import com.refinedmods.refinedstorage.api.network.Network;
 import com.refinedmods.refinedstorage.api.network.impl.node.externalstorage.ExternalStorageNetworkNode;
 import com.refinedmods.refinedstorage.api.network.storage.StorageNetworkComponent;
-import com.refinedmods.refinedstorage.api.resource.ResourceAmount;
-import com.refinedmods.refinedstorage.api.resource.ResourceKey;
-import com.refinedmods.refinedstorage.api.storage.Actor;
-import com.refinedmods.refinedstorage.api.storage.external.ExternalStorageProvider;
-import com.refinedmods.refinedstorage.api.storage.tracked.InMemoryTrackedStorageRepository;
 import com.refinedmods.refinedstorage.common.api.RefinedStorageApi;
 import com.refinedmods.refinedstorage.common.api.storage.PlayerActor;
-import com.refinedmods.refinedstorage.common.api.storage.externalstorage.ExternalStorageProviderFactory;
 import com.refinedmods.refinedstorage.common.support.resource.ItemResource;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 
@@ -50,8 +41,17 @@ import net.neoforged.neoforge.items.IItemHandler;
  * <p>This is the only storage medium in the mod. There are no disks and no storage blocks;
  * what a primitive network holds is whatever its readers can see, which is the early-game
  * shape of the thing - you are wiring up the chests you already have.
+ *
+ * <p>Everything storage-side follows RS's {@code AbstractExternalStorageBlockEntity}: the
+ * provider is loaded once, when the node first goes active, and again when the block is
+ * turned; scanning is paced by {@link ExternalStorageWorkRate}; and what a player last
+ * touched is remembered by {@link ExternalStorageTrackedStorageRepository} across a save.
+ * What is left out is RS's configuration - filters, fuzzy mode, access mode, priority, void
+ * excess - which arrives through a menu this block does not have.
  */
 public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrNodeHost {
+
+    private static final String TAG_TRACKED_RESOURCES = "tr";
 
     /**
      * The clock behind the storage's change tracking - what makes a grid able to sort by
@@ -61,12 +61,18 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
     private final ExternalStorageNetworkNode storageNode =
             new ExternalStorageNetworkNode(0L, System::currentTimeMillis);
 
-    private final PrNode node = new PrNode(this, storageNode, "external_reader");
+    private final ExternalStorageTrackedStorageRepository trackedStorageRepository =
+            new ExternalStorageTrackedStorageRepository(this::setChanged);
 
-    /** The block last resolved a provider from, so a chest swapped for a barrel is noticed. */
-    private BlockState observedTarget;
+    private final ExternalStorageWorkRate workRate = new ExternalStorageWorkRate();
 
-    // --- Diagnosis, computed on the server and shipped to the goggles ------------
+    private final PrNetworkNodeContainer node =
+            new PrNetworkNodeContainer(this, storageNode, "external_reader");
+
+    /** Whether the provider has been resolved once. RS's flag, and RS's use for it. */
+    private boolean initialized;
+
+    // --- Readout, computed on the server and shipped to the goggles --------------
     /** Slots in the target's item handler, or -1 if it has none on the face we touch. */
     private int targetSlots = -1;
     private int targetEmptySlots;
@@ -75,14 +81,16 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
 
     public ExternalReaderBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-        // Without one the node quietly records nothing, and a grid sorted by "last
-        // modified" never moves. RS's own repository for this is package-private; the
-        // in-memory one behind it is not, and is what it extends.
-        storageNode.setTrackingRepository(new InMemoryTrackedStorageRepository());
+        // Without a tracking repository the node quietly records nothing, and a grid sorted
+        // by "last modified" never moves.
+        storageNode.setTrackingRepository(trackedStorageRepository);
+        // RS does its first storage load from its activenessChanged override. Composition
+        // has no override, so the same work hangs off the container's listener.
+        node.setActivenessListener(this::activenessChanged);
     }
 
     @Override
-    public PrNode prNode() {
+    public PrNetworkNodeContainer prNode() {
         return node;
     }
 
@@ -95,7 +103,7 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
     @Override
     public void clearRemoved() {
         super.clearRemoved();
-        node.onClearRemoved();
+        node.clearRemoved();
     }
 
     /**
@@ -105,7 +113,7 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
     @Override
     public void remove() {
         super.remove();
-        node.onSetRemoved();
+        node.setRemoved();
     }
 
     @Override
@@ -120,15 +128,62 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
         refresh();
     }
 
+    /**
+     * Re-resolves the provider when the block itself is turned.
+     *
+     * <p>RS hangs this off {@code setBlockState} too, guarded on the direction actually
+     * changing. The guard is not optional here: the lit state flips through
+     * {@code switchToBlockState}, which sets the block, which lands in this method - so
+     * without it every light change would re-resolve the storage.
+     *
+     * <p>Vanilla marks the method deprecated to mean "the game calls this, you do not". RS
+     * overrides it here for exactly this, which is what it is for.
+     */
+    @Override
+    @SuppressWarnings("deprecation")
+    public void setBlockState(BlockState newBlockState) {
+        BlockState oldBlockState = getBlockState();
+        super.setBlockState(newBlockState);
+        if (level instanceof ServerLevel serverLevel && initialized && facingChanged(oldBlockState, newBlockState)) {
+            loadStorage(serverLevel);
+        }
+    }
+
+    private static boolean facingChanged(BlockState oldBlockState, BlockState newBlockState) {
+        return oldBlockState.hasProperty(ExternalReaderBlock.HORIZONTAL_FACING)
+                && newBlockState.hasProperty(ExternalReaderBlock.HORIZONTAL_FACING)
+                && oldBlockState.getValue(ExternalReaderBlock.HORIZONTAL_FACING)
+                != newBlockState.getValue(ExternalReaderBlock.HORIZONTAL_FACING);
+    }
+
+    /**
+     * A block next to us changed - very often the chest we are reading.
+     *
+     * <p>Nothing is re-resolved: the providers RS builds hold a NeoForge capability cache,
+     * which invalidates itself when the block it points at changes, so a chest swapped for a
+     * barrel is followed without being told. What this does is wind the scan rate back up,
+     * so the change is seen on the next tick or two rather than up to two seconds later.
+     */
+    public void neighborChanged() {
+        workRate.faster();
+    }
+
+    /**
+     * RS's {@code doWork}: scan the target for changes, and let how often it changes decide
+     * how often to look again.
+     */
     @Override
     public void tick() {
         super.tick();
-        // Whatever is in the chest changed, or someone took something out by hand. RS's own
-        // external storage rate-limits this against an adaptive work rate; a primitive
-        // network is small enough that every tick is affordable and every tick is what
-        // makes the grid feel live.
-        if (level != null && !level.isClientSide && storageNode.isActive()) {
-            storageNode.detectChanges();
+        if (level == null || level.isClientSide || !storageNode.isActive()) {
+            return;
+        }
+        if (workRate.canDoWork()) {
+            if (storageNode.detectChanges()) {
+                workRate.faster();
+            } else {
+                workRate.slower();
+            }
         }
     }
 
@@ -142,27 +197,46 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
         if (!(level instanceof ServerLevel serverLevel)) {
             return;
         }
-        BlockState state = getBlockState();
-        if (!(state.getBlock() instanceof ExternalReaderBlock)) {
-            return;
-        }
+        node.update(getBlockState(), ExternalReaderBlock.LIT);
+        refreshReadout(serverLevel, getBlockState());
+    }
 
-        node.refresh(PrNodes.isPowered(this));
-
-        BlockState target = serverLevel.getBlockState(targetPos(state));
-        if (observedTarget == null || !target.equals(observedTarget)) {
-            observedTarget = target;
-            loadStorage(serverLevel, state);
-        }
-
-        refreshReadout(serverLevel, state);
-
-        boolean shouldBeLit = node.isActive();
-        if (state.getValue(ExternalReaderBlock.LIT) != shouldBeLit) {
-            KineticBlockEntity.switchToBlockState(level, worldPosition,
-                    state.setValue(ExternalReaderBlock.LIT, shouldBeLit));
+    /** RS's {@code activenessChanged}: the first time this block works, resolve what it reads. */
+    private void activenessChanged(boolean newActive) {
+        if (!initialized && level instanceof ServerLevel serverLevel) {
+            loadStorage(serverLevel);
+            initialized = true;
         }
     }
+
+    /**
+     * Hands the block in front to Refined Storage to wrap.
+     *
+     * <p>Every registered factory is tried, in order, rather than only the item-handler
+     * one: that is the extension point other mods add themselves to, so a reader picks up
+     * anything an RS External Storage would have. This is RS's own {@code loadStorage},
+     * minus its special case for RS's Interface block, which cannot join a primitive network.
+     */
+    private void loadStorage(ServerLevel serverLevel) {
+        BlockState state = getBlockState();
+        if (!state.hasProperty(ExternalReaderBlock.HORIZONTAL_FACING)) {
+            return;
+        }
+        Direction facing = state.getValue(ExternalReaderBlock.HORIZONTAL_FACING);
+        BlockPos target = worldPosition.relative(facing);
+        // The side of the target that we touch, which is the direction pointing from it
+        // back at us. Same sense RS passes for its own external storage.
+        Direction incomingDirection = facing.getOpposite();
+
+        storageNode.initialize(new CompositeExternalStorageProvider(
+                RefinedStorageApi.INSTANCE.getExternalStorageProviderFactories()
+                        .stream()
+                        .map(factory -> factory.create(serverLevel, target, incomingDirection))
+                        .filter(Objects::nonNull)
+                        .toList()));
+    }
+
+    // --- Readout ----------------------------------------------------------------
 
     /**
      * Re-reads what the block can see and sends it to the client if it moved.
@@ -174,6 +248,9 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
      * the client's empty copy of the world and display incorrect state.
      */
     private void refreshReadout(ServerLevel serverLevel, BlockState state) {
+        if (!state.hasProperty(ExternalReaderBlock.HORIZONTAL_FACING)) {
+            return;
+        }
         Direction side = state.getValue(ExternalReaderBlock.HORIZONTAL_FACING).getOpposite();
         IItemHandler handler = serverLevel.getCapability(
                 Capabilities.ItemHandler.BLOCK, targetPos(state), side);
@@ -201,10 +278,7 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
      * Asks the network, for real, whether it would take one more item.
      *
      * <p>"The grid will not accept items" has two halves that look identical from outside:
-     * either the storage refuses, or the menu never gets as far as asking it. Every link
-     * between the grid's insert and this block's chest was read out of Refined Storage's
-     * own bytecode and found to be the same code RS's own grid runs, so the answer is in
-     * state that reading does not reach. This asks.
+     * either the storage refuses, or the menu never gets as far as asking it.
      *
      * <p>A <b>simulated</b> insert of one stone at the root storage - the same call
      * {@code TransferHelper} makes on the player's behalf. Stone rather than something the
@@ -213,7 +287,7 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
      * nothing and changes nothing.
      */
     private boolean probeInsert() {
-        Network network = node.network();
+        Network network = node.getNetwork();
         if (network == null) {
             return false;
         }
@@ -228,31 +302,6 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
 
     private BlockPos targetPos(BlockState state) {
         return worldPosition.relative(state.getValue(ExternalReaderBlock.HORIZONTAL_FACING));
-    }
-
-    /**
-     * Hands the block in front to Refined Storage to wrap.
-     *
-     * <p>Every registered factory is tried, in order, rather than only the item-handler
-     * one: that is the extension point other mods add themselves to, so a reader picks up
-     * anything an RS External Storage would have.
-     */
-    private void loadStorage(ServerLevel serverLevel, BlockState state) {
-        Direction facing = state.getValue(ExternalReaderBlock.HORIZONTAL_FACING);
-        BlockPos target = targetPos(state);
-        // The side of the target that we touch, which is the direction pointing from it
-        // back at us. Same sense RS passes for its own external storage.
-        Direction side = facing.getOpposite();
-
-        List<ExternalStorageProvider> providers = new ArrayList<>();
-        for (ExternalStorageProviderFactory factory : RefinedStorageApi.INSTANCE
-                .getExternalStorageProviderFactories()) {
-            ExternalStorageProvider provider = factory.create(serverLevel, target, side);
-            if (provider != null) {
-                providers.add(provider);
-            }
-        }
-        storageNode.initialize(providers.isEmpty() ? EMPTY : new CompositeStorageProvider(providers));
     }
 
     /**
@@ -293,12 +342,17 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
         return true;
     }
 
+    // --- Persistence ------------------------------------------------------------
+
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         super.write(tag, registries, clientPacket);
         tag.putInt("TargetSlots", targetSlots);
         tag.putInt("TargetEmptySlots", targetEmptySlots);
         tag.putBoolean("NetworkAccepts", networkAccepts);
+        if (!clientPacket) {
+            tag.put(TAG_TRACKED_RESOURCES, trackedStorageRepository.toTag(registries));
+        }
     }
 
     @Override
@@ -307,6 +361,10 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
         targetSlots = tag.contains("TargetSlots") ? tag.getInt("TargetSlots") : -1;
         targetEmptySlots = tag.getInt("TargetEmptySlots");
         networkAccepts = tag.getBoolean("NetworkAccepts");
+        if (!clientPacket && tag.contains(TAG_TRACKED_RESOURCES)) {
+            trackedStorageRepository.fromTag(
+                    Objects.requireNonNull(tag.get(TAG_TRACKED_RESOURCES)), registries);
+        }
     }
 
     private static void line(List<Component> tooltip, String label, boolean ok, String detail) {
@@ -316,25 +374,4 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
                 .append(Component.literal(label + ": ").withStyle(ChatFormatting.GRAY))
                 .append(Component.literal(detail).withStyle(ChatFormatting.WHITE)));
     }
-
-    /**
-     * What a reader facing a wall exposes. A node with no delegate at all would leave the
-     * previous chest's contents on the network after the chest was mined.
-     */
-    private static final ExternalStorageProvider EMPTY = new ExternalStorageProvider() {
-        @Override
-        public Iterator<ResourceAmount> iterator() {
-            return Collections.emptyIterator();
-        }
-
-        @Override
-        public long insert(ResourceKey resource, long amount, Action action, Actor actor) {
-            return 0L;
-        }
-
-        @Override
-        public long extract(ResourceKey resource, long amount, Action action, Actor actor) {
-            return 0L;
-        }
-    };
 }

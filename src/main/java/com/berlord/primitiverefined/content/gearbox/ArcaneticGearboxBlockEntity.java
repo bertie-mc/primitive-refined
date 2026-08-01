@@ -1,8 +1,7 @@
 package com.berlord.primitiverefined.content.gearbox;
 
-import com.berlord.primitiverefined.network.PrNode;
+import com.berlord.primitiverefined.network.PrNetworkNodeContainer;
 import com.berlord.primitiverefined.network.PrNodeHost;
-import com.berlord.primitiverefined.network.PrNodes;
 import com.refinedmods.refinedstorage.api.network.impl.node.SimpleNetworkNode;
 import com.simibubi.create.content.kinetics.gearbox.GearboxBlockEntity;
 
@@ -23,21 +22,22 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public class ArcaneticGearboxBlockEntity extends GearboxBlockEntity implements PrNodeHost {
 
-    private final PrNode node = new PrNode(this, new SimpleNetworkNode(0L), "arcanetic_gearbox");
+    private final PrNetworkNodeContainer node =
+            new PrNetworkNodeContainer(this, new SimpleNetworkNode(0L), "arcanetic_gearbox");
 
     public ArcaneticGearboxBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 
     @Override
-    public PrNode prNode() {
+    public PrNetworkNodeContainer prNode() {
         return node;
     }
 
     @Override
     public void clearRemoved() {
         super.clearRemoved();
-        node.onClearRemoved();
+        node.clearRemoved();
     }
 
     /**
@@ -47,18 +47,18 @@ public class ArcaneticGearboxBlockEntity extends GearboxBlockEntity implements P
     @Override
     public void remove() {
         super.remove();
-        node.onSetRemoved();
+        node.setRemoved();
     }
 
     @Override
     public void onSpeedChanged(float previousSpeed) {
         super.onSpeedChanged(previousSpeed);
-        node.refresh(PrNodes.isPowered(this));
+        node.update(getBlockState(), null);
     }
 
     @Override
     public void lazyTick() {
         super.lazyTick();
-        node.refresh(PrNodes.isPowered(this));
+        node.update(getBlockState(), null);
     }
 }

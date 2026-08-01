@@ -13,7 +13,11 @@ import java.util.Iterator;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class CompositeStorageProviderTest {
+/**
+ * Pins Refined Storage's semantics, which this class is a copy of: the first provider that
+ * moves anything wins, and every provider is asked for the whole amount.
+ */
+class CompositeExternalStorageProviderTest {
     private static final ResourceKey RESOURCE = new ResourceKey() {};
 
     @Test
@@ -24,7 +28,8 @@ class CompositeStorageProviderTest {
         FakeProvider second = new FakeProvider(0, 0, secondAmount);
 
         List<ResourceAmount> resources = new ArrayList<>();
-        new CompositeStorageProvider(List.of(first, second)).iterator().forEachRemaining(resources::add);
+        new CompositeExternalStorageProvider(List.of(first, second)).iterator()
+                .forEachRemaining(resources::add);
 
         assertEquals(2, resources.size());
         assertSame(firstAmount, resources.get(0));
@@ -32,33 +37,44 @@ class CompositeStorageProviderTest {
     }
 
     @Test
-    void insertsOnlyTheAmountRemainingAcrossProviders() {
-        FakeProvider first = new FakeProvider(4, 0);
-        FakeProvider second = new FakeProvider(20, 0);
+    void insertsThroughTheFirstProviderThatTakesAnything() {
+        FakeProvider refuses = new FakeProvider(0, 0);
+        FakeProvider takes = new FakeProvider(4, 0);
         FakeProvider unused = new FakeProvider(20, 0);
 
-        long inserted = new CompositeStorageProvider(List.of(first, second, unused))
+        long inserted = new CompositeExternalStorageProvider(List.of(refuses, takes, unused))
                 .insert(RESOURCE, 10, Action.EXECUTE, Actor.EMPTY);
 
-        assertEquals(10, inserted);
-        assertEquals(List.of(10L), first.insertRequests);
-        assertEquals(List.of(6L), second.insertRequests);
+        assertEquals(4, inserted);
+        assertEquals(List.of(10L), refuses.insertRequests);
+        assertEquals(List.of(10L), takes.insertRequests);
         assertEquals(List.of(), unused.insertRequests);
     }
 
     @Test
-    void extractsOnlyTheAmountRemainingAcrossProviders() {
-        FakeProvider first = new FakeProvider(0, 2);
-        FakeProvider second = new FakeProvider(0, 3);
-        FakeProvider third = new FakeProvider(0, 10);
+    void extractsThroughTheFirstProviderThatGivesAnything() {
+        FakeProvider empty = new FakeProvider(0, 0);
+        FakeProvider gives = new FakeProvider(0, 3);
+        FakeProvider unused = new FakeProvider(0, 10);
 
-        long extracted = new CompositeStorageProvider(List.of(first, second, third))
+        long extracted = new CompositeExternalStorageProvider(List.of(empty, gives, unused))
                 .extract(RESOURCE, 8, Action.EXECUTE, Actor.EMPTY);
 
-        assertEquals(8, extracted);
-        assertEquals(List.of(8L), first.extractRequests);
-        assertEquals(List.of(6L), second.extractRequests);
-        assertEquals(List.of(3L), third.extractRequests);
+        assertEquals(3, extracted);
+        assertEquals(List.of(8L), empty.extractRequests);
+        assertEquals(List.of(8L), gives.extractRequests);
+        assertEquals(List.of(), unused.extractRequests);
+    }
+
+    @Test
+    void movesNothingWhenNoProviderWill() {
+        FakeProvider first = new FakeProvider(0, 0);
+        FakeProvider second = new FakeProvider(0, 0);
+        CompositeExternalStorageProvider composite =
+                new CompositeExternalStorageProvider(List.of(first, second));
+
+        assertEquals(0, composite.insert(RESOURCE, 5, Action.EXECUTE, Actor.EMPTY));
+        assertEquals(0, composite.extract(RESOURCE, 5, Action.EXECUTE, Actor.EMPTY));
     }
 
     private static final class FakeProvider implements ExternalStorageProvider {

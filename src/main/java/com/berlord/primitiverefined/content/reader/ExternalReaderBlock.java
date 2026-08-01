@@ -8,6 +8,7 @@ import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -60,6 +61,23 @@ public class ExternalReaderBlock extends HorizontalKineticBlock
     @Override
     public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {
         return face == state.getValue(HORIZONTAL_FACING).getOpposite();
+    }
+
+    /**
+     * Tells the block entity to look at its target sooner.
+     *
+     * <p>The same hook RS's own External Storage block uses. A hopper dropping the first
+     * item into the chest in front changes a neighbour; without this the reader would not
+     * notice for up to two seconds, because its scan rate has backed off while nothing was
+     * happening.
+     */
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock,
+                                   BlockPos neighborPos, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, movedByPiston);
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof ExternalReaderBlockEntity reader) {
+            reader.neighborChanged();
+        }
     }
 
     @Override

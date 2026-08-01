@@ -18,6 +18,7 @@ public class PCraftingGridContainerMenu extends AbstractCraftingGridContainerMen
 
     public PCraftingGridContainerMenu(int syncId, Inventory playerInventory, GridData gridData) {
         super(PrMenus.CRAFTING_GRID.get(), syncId, playerInventory, gridData);
+        resized(0, 0, 0);
     }
 
     /**
@@ -27,6 +28,6 @@ public class PCraftingGridContainerMenu extends AbstractCraftingGridContainerMen
      */
     public PCraftingGridContainerMenu(int syncId, Inventory playerInventory, CraftingGrid craftingGrid) {
         super(PrMenus.CRAFTING_GRID.get(), syncId, playerInventory, craftingGrid);
-        PGridContainerMenu.giveTheServerItsSlots(this, playerInventory);
+        resized(0, 0, 0);
     }
 }
