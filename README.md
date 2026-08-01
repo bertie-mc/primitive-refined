@@ -143,6 +143,8 @@ reach past the block and out through the window in the rims, which is how it mes
 cogwheel laid alongside. The block is an `ICogWheel` for the same reason Create's crafter
 is one.
 
+**Extraction works in game; insertion does not.** See Known gaps.
+
 **They open Refined Storage's own grid screens.** Sorting, the search box and its query
 syntax, the view modes, the synchronizers, insert, extract, scroll, shift-click and — on the
 crafting grid — the 3x3 matrix, recipe transfer from EMI or JEI, and crafting straight out
@@ -168,8 +170,17 @@ since Create's own switch can also sit on floors and ceilings but the shaft has 
 somewhere and a horizontal line is where this mod puts it.
 
 **It reads the inventory in front of it**, so the block sits in a straight line between the
-two: shaft, reader, chest. Every registered `ExternalStorageProviderFactory` is tried rather
-than only the item-handler one, so a reader picks up anything an RS External Storage would.
+two: shaft, reader, chest. Every registered `ExternalStorageProviderFactory` is **composed**,
+not merely tried in turn, so a reader picks up anything an RS External Storage would — this
+matters because `ItemHandlerPlatformExternalStorageProviderFactory.create` never returns
+null, so "take the first factory that answers" silently meant "take whichever is first in
+the collection". RS's own composite for this is package-private, hence
+`CompositeStorageProvider`.
+
+**Its goggle readout states what it can see**: the block in front, whether that block hands
+out an item handler on the face the reader touches, how many of its slots are empty, and
+whether the node is on a live network. Between them those separate "not powered", "not
+connected", "not an inventory" and "the chest is full".
 Change detection runs every tick — RS rate-limits its own against an adaptive work rate, but
 a primitive network is small enough to afford it and it is what makes the grid feel live.
 
@@ -201,6 +212,14 @@ the same game time — one texture on both faces is frame-locked and no amount o
 will unstick it.
 
 ### Arcanetic Gearbox (`primitive_refined:arcanetic_gearbox`)
+
+**Its drops are overridden, and had to be.** Create's `GearboxBlock#getDrops` bypasses the
+loot table whenever the axis is horizontal and hands back `AllItems.VERTICAL_GEARBOX`
+directly — one block, two items, and the block decides which one comes back. Inherited
+unchanged, that made an Arcanetic Gearbox placed on its side drop a **Create** Vertical
+Gearbox; the loot table was never consulted and was never wrong. `getDrops` now applies the
+same rule with our items.
+
 
 Create's gearbox in this mod's materials. `ArcaneticGearboxBlock` extends Create's
 `GearboxBlock` outright, so the awkward part — redirecting rotation around a corner and
@@ -332,6 +351,35 @@ first are the ones where intent mattered:
   propagation in the world, so a false positive would break Create itself.
 - **Two controllers on one network** should darken everything and say so through the
   goggles.
+
+### Inserting into the grid does not work, and the cause is not yet known
+
+**Extraction works; insertion does not.** Reported from the first in-game test of 0.2.0.
+
+The whole insert path was traced through Refined Storage's bytecode and **no defect was
+found in it.** `AbstractGridContainerMenu.onInsert` and `onExtract` are symmetric;
+`GridOperationsImpl.insert` is `TransferHelper.transfer(cursor -> rootStorage)`;
+`CompositeStorageImpl.addSource` populates the insert and extract source lists together.
+The only guard `compositeInsert` has that `compositeExtract` does not is
+`StorageConfiguration.isAllowed`, and the default filter is `FilterMode.BLOCK` over an
+empty set, which allows everything. `AccessMode` defaults to `INSERT_EXTRACT`. Nothing was
+logged.
+
+That leaves the target block rather than the code, and the goggle readout added in 0.2.1
+answers it in one look — it reports the block in front, whether that block hands out an
+item handler on the face the reader touches, **how many of its slots are empty**, and
+whether the node is on a live network. A chest filled with test items has nowhere to put a
+new one, and would behave exactly as reported.
+
+Remaining suspects, in order:
+
+1. **The target was full**, or exposes no item handler on that face.
+2. **`detectChanges()` runs every tick** here where RS rate-limits its own against an
+   adaptive work rate. It should be idempotent, so this is a performance deviation rather
+   than a correctness one - but it is a deviation, and it is in the path an insert takes.
+3. Something about the menu's slots that only shift-clicking exercises. Worth knowing
+   whether the failure was a cursor click into the grid, a shift-click from the inventory,
+   or both.
 
 ### The External Reader's inventory face is a coin-flip that was flipped one way
 

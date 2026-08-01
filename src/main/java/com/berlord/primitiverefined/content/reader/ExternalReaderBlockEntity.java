@@ -1,7 +1,9 @@
 package com.berlord.primitiverefined.content.reader;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import com.berlord.primitiverefined.PrStress;
 import com.berlord.primitiverefined.network.PrNode;
@@ -13,15 +15,20 @@ import com.refinedmods.refinedstorage.api.resource.ResourceAmount;
 import com.refinedmods.refinedstorage.api.resource.ResourceKey;
 import com.refinedmods.refinedstorage.api.storage.Actor;
 import com.refinedmods.refinedstorage.api.storage.external.ExternalStorageProvider;
+import com.refinedmods.refinedstorage.api.storage.tracked.InMemoryTrackedStorageRepository;
 import com.refinedmods.refinedstorage.common.api.RefinedStorageApi;
 import com.refinedmods.refinedstorage.common.api.storage.externalstorage.ExternalStorageProviderFactory;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
 
 /**
  * The External Reader - Refined Storage's External Storage, driven by rotation.
@@ -53,6 +60,10 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
 
     public ExternalReaderBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+        // Without one the node quietly records nothing, and a grid sorted by "last
+        // modified" never moves. RS's own repository for this is package-private; the
+        // in-memory one behind it is not, and is what it extends.
+        storageNode.setTrackingRepository(new InMemoryTrackedStorageRepository());
     }
 
     @Override
@@ -150,15 +161,76 @@ public class ExternalReaderBlockEntity extends KineticBlockEntity implements PrN
     private void loadStorage(ServerLevel serverLevel, BlockState state) {
         Direction facing = state.getValue(ExternalReaderBlock.HORIZONTAL_FACING);
         BlockPos target = targetPos(state);
+        // The side of the target that we touch, which is the direction pointing from it
+        // back at us. Same sense RS passes for its own external storage.
+        Direction side = facing.getOpposite();
+
+        List<ExternalStorageProvider> providers = new ArrayList<>();
         for (ExternalStorageProviderFactory factory : RefinedStorageApi.INSTANCE
                 .getExternalStorageProviderFactories()) {
-            ExternalStorageProvider provider = factory.create(serverLevel, target, facing.getOpposite());
+            ExternalStorageProvider provider = factory.create(serverLevel, target, side);
             if (provider != null) {
-                storageNode.initialize(provider);
-                return;
+                providers.add(provider);
             }
         }
-        storageNode.initialize(EMPTY);
+        storageNode.initialize(providers.isEmpty() ? EMPTY : new CompositeStorageProvider(providers));
+    }
+
+    /**
+     * States what the reader can actually see, through the goggles.
+     *
+     * <p>The same reasoning as the controller's readout: "the grid will not take my items"
+     * has several indistinguishable causes, and the block is the only thing that knows
+     * which. It reports what it is pointed at, whether that block hands out an item
+     * handler on the face it touches, how many slots have room, and whether the node is on
+     * a live network - which between them separate "not powered", "not connected", "not an
+     * inventory" and "the chest is full".
+     */
+    @Override
+    public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        super.addToGoggleTooltip(tooltip, isPlayerSneaking);
+        if (level == null) {
+            return true;
+        }
+        BlockState state = getBlockState();
+        if (!(state.getBlock() instanceof ExternalReaderBlock)) {
+            return true;
+        }
+
+        Direction facing = state.getValue(ExternalReaderBlock.HORIZONTAL_FACING);
+        BlockPos target = targetPos(state);
+        BlockState targetState = level.getBlockState(target);
+        IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK, target, facing.getOpposite());
+
+        tooltip.add(Component.literal(" ").append(
+                Component.literal("External Reader").withStyle(ChatFormatting.GRAY)));
+        line(tooltip, "reading", !targetState.isAir(),
+                targetState.isAir() ? "nothing in front" : targetState.getBlock().getName().getString());
+        if (handler == null) {
+            line(tooltip, "item handler", false, "none on the " + facing.getOpposite() + " face");
+        } else {
+            int free = 0;
+            for (int slot = 0; slot < handler.getSlots(); slot++) {
+                if (handler.getStackInSlot(slot).isEmpty()) {
+                    free++;
+                }
+            }
+            line(tooltip, "item handler", true, handler.getSlots() + " slots, " + free + " empty");
+        }
+        line(tooltip, "turning", getSpeed() != 0, String.format("%.1f rpm", getSpeed()));
+        line(tooltip, "not overstressed", !isOverStressed(), isOverStressed() ? "overstressed" : "ok");
+        line(tooltip, "on a live network", node.isActive(),
+                node.network() == null ? "no network"
+                        : node.hasExactlyOneController() ? "yes" : "controller count is not 1");
+        return true;
+    }
+
+    private static void line(List<Component> tooltip, String label, boolean ok, String detail) {
+        tooltip.add(Component.literal("    ")
+                .append(Component.literal(ok ? "✔ " : "✘ ")
+                        .withStyle(ok ? ChatFormatting.GREEN : ChatFormatting.RED))
+                .append(Component.literal(label + ": ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(detail).withStyle(ChatFormatting.WHITE)));
     }
 
     /**
