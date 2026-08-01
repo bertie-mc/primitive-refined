@@ -97,6 +97,36 @@ the release mod.
 CI keeps building and testing as separate jobs. Release workflows consume the artifact
 from the build job and do not maintain another build recipe.
 
+## Verification status
+
+Exercised in a running client on 2026-08-01, against a rig of controller, two gearboxes,
+a shaft, a cog, both grids, a reader and a chest, driven by a Create large cogwheel:
+
+- Network forms across shafts, cogs and gearboxes, and reports one controller.
+- Insertion and extraction both work, on the plain grid and the crafting grid.
+- The crafting matrix is nine slots and resolves recipes; one oak log gave four planks.
+- The reader exposes the chest it faces and notices contents added behind its back.
+- Breaking a shaft splits the network; the offcut goes inactive and loses its storage.
+- A second controller takes the whole network inactive and darkens the grids.
+- Losing rotation does the same, and the network recovers when it returns.
+- A Create shaft placed against an arcanetic one pops and drops; the arcanetic one
+  survives. The gearbox drops our own item on both axes.
+
+**Not verified.** Overstress specifically: a creative motor's capacity cannot realistically
+be exceeded, so that branch of `PrNodes.isPowered` was only reached through its twin,
+speed-zero. Both set the same flag and nothing downstream distinguishes them.
+
+**Not verified, and not verifiable from `tools/preview.py`** — all four are drawn by a
+Flywheel visual rather than a block model, so they need eyes in game:
+
+- The direction each of the gearbox's four shafts turns. `ArcaneticGearboxVisual`'s rule
+  is transcribed from Create's bytecode, not played; a wrong one is a flipped sign in
+  `speedOf`, which decides direction only.
+- The vertical gearbox's item model in hand.
+- Whether the External Reader's two side displays visibly differ. They run different
+  textures with different segment layouts, so they should.
+- The grid's rotating parts on all four facings.
+
 ## Assets and authoring tools
 
 Derived textures are distributed with permission from their respective authors. See
