@@ -273,9 +273,9 @@ before loading this mod's built artifact. There are no unit-test or GameTest job
 the repository does not yet contain either kind of test.
 
 Refined Storage is a hard dependency, so both runtime jobs select the shared
-`create,refined-storage` fixture. The `refined-storage` profile was added centrally in
-`bertie-ci` v3.4.1 from the hash-pinned canonical pack; the client world-join and dedicated
-server probes both pass with that dependency set.
+`create,refined-storage` fixture. `bertie-ci` resolves both names directly from the
+hash-pinned canonical pack; no one-to-one profile declaration is needed. The client
+world-join and dedicated-server probes both pass with that dependency set.
 
 `release.yml` composes the same build job with the artifact-only GitHub publisher, so a
 release never maintains or runs a second build recipe.
